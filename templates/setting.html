@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top" />
+    <link
+      rel="stylesheet"
+      href="https://ssl.gstatic.com/docs/script/css/add-ons1.css"
+    />
+
+    <script>
+      function saveSetting() {
+        var citationStyle = document.getElementById("citation-style");
+        var citationValue = citationStyle.options[citationStyle.selectedIndex].value;
+        google.script.run.saveSetting(citationValue);
+      }
+    </script>
+  </head>
+  <body>
+    <style>
+      .branding-below {
+        bottom: 56px;
+        top: 0;
+      }
+    </style>
+
+    <div class="sidebar branding-below">
+      <div class="block form-group" style="width: 100%;">
+        <label for="translated-text">Citation style:</label>
+        <select id="citation-style" onchange="selectFolders(event)">
+            <option value="apa">APA</option>
+            <option value="vancouver">Vancouver</option>
+            <option value="harvard">Harvard</option>
+        </select>
+      </div>
+
+      <div class="block form-group">
+        <button class="blue" onclick="saveSetting()">Save</button>
+        </div>
+
+    <div class="sidebar bottom">
+      <span class="gray"> This add-ons is not created by Mendeley.</span>
+    </div>
+  </body>
+</html>

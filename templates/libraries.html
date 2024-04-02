@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top" />
+    <link
+      rel="stylesheet"
+      href="https://ssl.gstatic.com/docs/script/css/add-ons1.css"
+    />
+
+    <script>
+      function onSuccessFolder(documents) {
+        // Create a in libraries for all the documents
+        var libraries = document.getElementById("libraries");
+        libraries.innerHTML = "";
+        for (var i = 0; i < documents.length; i++) {
+          var div = document.createElement("div");
+          div.className = "block";
+          div.style =
+            "border-bottom: 1px solid #ccc; padding: 10px; margin: 0px;";
+
+          var citeBtn = document.createElement("button");
+          citeBtn.innerHTML = "Cite";
+          citeBtn.className = "blue";
+          citeBtn.style = "margin-right: 5px;";
+          citeBtn.setAttribute("data-id", documents[i].id);
+          citeBtn.onclick = citeDocument;
+          div.appendChild(citeBtn);
+
+          var titleBold = document.createElement("b");
+          titleBold.innerHTML = documents[i].title;
+          div.appendChild(titleBold);
+
+          var year = document.createElement("span");
+          year.innerHTML = " (" + documents[i].year + ")";
+          div.appendChild(year);
+
+          libraries.appendChild(div);
+        }
+      }
+
+      function onFailure(error) {
+        var div = document.createElement("div");
+        div.className = "block";
+        div.style =
+          "border-bottom: 1px solid #ccc; padding: 10px; margin: 0px;";
+
+        var errorSpan = document.createElement("span");
+        errorSpan.innerHTML = error;
+        div.appendChild(errorSpan);
+      }
+
+      function selectFolders(e) {
+        var libraries = document.getElementById("libraries");
+        libraries.innerHTML = "Loading...";
+
+        var selected = e.target.value;
+        google.script.run
+          .withSuccessHandler(onSuccessFolder)
+          .getDocuments(selected);
+      }
+
+      function citeDocument(e) {
+        var button = e.target;
+        button.innerHTML = "Citing...";
+        button.disabled = true;
+        button.className = "gray";
+
+        var documentId = e.target.getAttribute("data-id");
+        var curFolderID = document.getElementById("documents").value;
+        google.script.run
+          .withFailureHandler(onFailure)
+          .doCite(documentId, curFolderID);
+
+        setTimeout(function () {
+          button.innerHTML = "Cite";
+          button.disabled = false;
+          button.className = "blue";
+        }, 2000);
+      }
+
+      // Load all articles when the page is first loaded
+      window.onload = function (e) {
+        var defaultFolderID = "<?= defaultFolderID ?>";
+        google.script.run
+          .withSuccessHandler(onSuccessFolder)
+          .getDocuments(defaultFolderID);
+      };
+    </script>
+  </head>
+  <body>
+    <style>
+      .branding-below {
+        bottom: 56px;
+        top: 0;
+      }
+    </style>
+
+    <div class="sidebar branding-below">
+      <div class="block form-group">
+        <label for="translated-text">Folders/Collections</label>
+        <select
+          name="documents"
+          id="documents"
+          style="width: 100%"
+          onchange="selectFolders(event)"
+        >
+          <option value="">All Articles</option>
+          <? for (var i = 0; i < folders.length; i++) { ?>
+          <option value="<?= folders[i].id ?>"><?= folders[i].name ?></option>
+          <? } ?>
+        </select>
+      </div>
+
+      <div class="block form-group">
+        <label for="city">Search article:</label>
+        <input type="text" id="query" style="width: 100%" />
+      </div>
+
+      <div class="block" id="libraries">Loading...</div>
+    </div>
+
+    <div class="sidebar bottom">
+      <span class="gray"> This add-ons is not created by Mendeley.</span>
+    </div>
+  </body>
+</html>
