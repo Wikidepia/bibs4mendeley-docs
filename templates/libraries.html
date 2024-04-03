@@ -6,47 +6,63 @@
       rel="stylesheet"
       href="https://ssl.gstatic.com/docs/script/css/add-ons1.css"
     />
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
 
     <script>
-      function onSuccessFolder(documents) {
+      var searchIndex = null;
+      function renderLibraries(documents) {
         // Create a in libraries for all the documents
         var libraries = document.getElementById("libraries");
         libraries.innerHTML = "";
+
+        // Initialize searchIndex if it is not initialized
+        if (!searchIndex) {
+          searchIndex = documents;
+        }
+
         for (var i = 0; i < documents.length; i++) {
+          var curDocument = documents[i];
           var div = document.createElement("div");
           div.className = "block";
           div.style =
             "border-bottom: 1px solid #ccc; padding: 10px; margin: 0px;";
+          div.onclick = function () {
+            // Click checkbox when clicking on the div
+            var checkbox = this.querySelector("input[type=checkbox]");
+            checkbox.checked = !checkbox.checked;
+          };
 
-          var citeBtn = document.createElement("button");
-          citeBtn.innerHTML = "Cite";
-          citeBtn.className = "blue";
-          citeBtn.style = "margin-right: 5px;";
-          citeBtn.setAttribute("data-id", documents[i].id);
-          citeBtn.onclick = citeDocument;
-          div.appendChild(citeBtn);
+          var citeCheckbox = document.createElement("input");
+          citeCheckbox.type = "checkbox";
+          citeCheckbox.setAttribute("data-id", curDocument.id);
+          div.appendChild(citeCheckbox);
 
           var titleBold = document.createElement("b");
-          titleBold.innerHTML = documents[i].title;
+          titleBold.innerHTML = curDocument.title;
+          titleBold.style = "font-size: 14px;";
           div.appendChild(titleBold);
+          div.appendChild(document.createElement("br"));
+
+          var authorsText = "";
+          var authors = document.createElement("span");
+          for (var j = 0; j < Math.min(5, curDocument.authors.length); j++) {
+            authorsText += curDocument.authors[j].first_name[0] + ". ";
+            authorsText += curDocument.authors[j].last_name;
+            if (j < curDocument.authors.length - 1) {
+              authorsText += ", ";
+            }
+          }
+          authors.innerHTML = authorsText.trim();
+          div.appendChild(authors);
+          div.appendChild(document.createElement("br"));
 
           var year = document.createElement("span");
-          year.innerHTML = " (" + documents[i].year + ")";
+          year.innerHTML = " (" + curDocument.year + ")";
+          year.className = "secondary";
           div.appendChild(year);
 
           libraries.appendChild(div);
         }
-      }
-
-      function onFailure(error) {
-        var div = document.createElement("div");
-        div.className = "block";
-        div.style =
-          "border-bottom: 1px solid #ccc; padding: 10px; margin: 0px;";
-
-        var errorSpan = document.createElement("span");
-        errorSpan.innerHTML = error;
-        div.appendChild(errorSpan);
       }
 
       function selectFolders(e) {
@@ -55,7 +71,7 @@
 
         var selected = e.target.value;
         google.script.run
-          .withSuccessHandler(onSuccessFolder)
+          .withSuccessHandler(renderLibraries)
           .getDocuments(selected);
       }
 
@@ -65,25 +81,52 @@
         button.disabled = true;
         button.className = "gray";
 
-        var documentId = e.target.getAttribute("data-id");
-        var curFolderID = document.getElementById("documents").value;
-        google.script.run
-          .withFailureHandler(onFailure)
-          .doCite(documentId, curFolderID);
+        var documentIDs = [];
+        var checkboxes = document.querySelectorAll("input[type=checkbox]");
+        for (var i = 0; i < checkboxes.length; i++) {
+          if (checkboxes[i].checked) {
+            documentIDs.push(checkboxes[i].getAttribute("data-id"));
+          }
+        }
 
-        setTimeout(function () {
-          button.innerHTML = "Cite";
-          button.disabled = false;
-          button.className = "blue";
-        }, 2000);
+        google.script.run
+          .withSuccessHandler(function () {
+            button.innerHTML = "INSERT CITATION";
+            button.disabled = false;
+            button.className = "blue";
+            checkboxes.forEach((c) => (c.checked = false));
+          })
+          .doCite(documentIDs);
+      }
+
+      function searchDocument() {
+        var query = document.getElementById("query").value;
+        // If the query is empty, show all libraries
+        if (query.length == 0) {
+          return renderLibraries(searchIndex);
+        }
+
+        var options = {
+          keys: [
+            "title",
+            "authors.first_name",
+            "authors.last_name",
+            "abstract",
+          ],
+          distance: 200,
+        };
+
+        var fuse = new Fuse(searchIndex, options);
+        var result = fuse.search(query);
+        var libraries = result.map((r) => r.item);
+        return renderLibraries(libraries);
       }
 
       // Load all articles when the page is first loaded
       window.onload = function (e) {
-        var defaultFolderID = "<?= defaultFolderID ?>";
         google.script.run
-          .withSuccessHandler(onSuccessFolder)
-          .getDocuments(defaultFolderID);
+          .withSuccessHandler(renderLibraries)
+          .getDocuments("");
       };
     </script>
   </head>
@@ -113,13 +156,23 @@
 
       <div class="block form-group">
         <label for="city">Search article:</label>
-        <input type="text" id="query" style="width: 100%" />
+        <input
+          type="text"
+          id="query"
+          style="width: 100%"
+          onkeyup="searchDocument()"
+        />
       </div>
 
       <div class="block" id="libraries">Loading...</div>
     </div>
 
-    <div class="sidebar bottom">
+    <div class="sidebar bottom" style="padding-top: 0px">
+      <br />
+      <button class="blue" onclick="citeDocument(event)" style="width: 100%">
+        INSERT CITATION
+      </button>
+      <br />
       <span class="gray"> This add-ons is not created by Mendeley.</span>
     </div>
   </body>

@@ -36,7 +36,7 @@ function saveSetting(citationStyle: string) {
   ui.alert("Setting saved");
 }
 
-function openLibrary(defaultFolderID: string) {
+function openLibrary() {
   var service = getService_();
   var response = UrlFetchApp.fetch(
     "https://api.mendeley.com/folders?maxResults=10",
@@ -50,7 +50,6 @@ function openLibrary(defaultFolderID: string) {
 
   var template = HtmlService.createTemplateFromFile("templates/libraries.html");
   template.folders = folders;
-  template.defaultFolderID = defaultFolderID;
   var page = template.evaluate();
   DocumentApp.getUi().showSidebar(page);
 }
@@ -84,25 +83,30 @@ function getDocumentBibtex(document_id: string) {
   return response.getContentText();
 }
 
-function doCite(document_id: string, current_folder_id: string) {
-  var bibtex = getDocumentBibtex(document_id);
-  var cache = CacheService.getScriptCache();
-  cache.put(`bibtex-${document_id}`, bibtex);
-
+function doCite(documentIDs: string[]) {
   const citationStyle =
     PropertiesService.getDocumentProperties().getProperty("citationStyle");
+
+  var bibtexes = [];
+  for (var i = 0; i < documentIDs.length; i++) {
+    var documentID = documentIDs[i];
+    var bibtex = getDocumentBibtex(documentID);
+    var cache = CacheService.getScriptCache();
+    cache.put(`bibtex-${documentID}`, bibtex);
+    bibtexes.push(bibtex);
+  }
 
   var apiConvert = UrlFetchApp.fetch(
     `https://bibtex-converter.wikidepia.workers.dev/convert/${citationStyle}`,
     {
       method: "post",
-      payload: JSON.stringify([bibtex]),
+      payload: JSON.stringify(bibtexes),
     }
   );
   var apiResult = JSON.parse(apiConvert.getContentText());
 
   // Insert citation
-  insertCitation(apiResult["citation"], document_id);
+  insertCitation(apiResult["citation"], documentIDs);
 
   // Insert bibliography
   insertBibliography(false);
@@ -139,7 +143,7 @@ function insertNewBibliographyIndex(bibliography: string, documentID: string) {
 }
 
 // From: https://stackoverflow.com/a/59711275
-function insertCitation(citation: string, documentID: string) {
+function insertCitation(citation: string, documentIDs: string[]) {
   var baseDoc = DocumentApp.getActiveDocument();
 
   var cursor = baseDoc.getCursor();
@@ -148,17 +152,20 @@ function insertCitation(citation: string, documentID: string) {
   }
 
   // Append text to after the cursor
-  var text = cursor.insertText(citation);
-  // if (text.getText().slice(-1) != " ") {
-  //   cursor.insertText(" ");
+  // var cursorTextOffset = cursor.getSurroundingTextOffset();
+  // var cursorTextBefore = cursor.getSurroundingText().getText();
+  // if (cursorTextBefore[cursorTextOffset - 1] != " ") {
+  //   citation = " " + citation;
   // }
+
+  var text = cursor.insertText(citation);
 
   // Add marker behind with zws
   text.appendText(`​`);
   text.setLinkUrl(
     text.getText().length - 1,
     text.getText().length - 1,
-    `#cite-mendeley-${documentID}#${citation.length}`
+    `#cite-mendeley+${documentIDs.join('|')}+${citation.length}`
   );
 }
 
@@ -172,8 +179,10 @@ function insertBibliography(createNew: boolean = true) {
     var element = citesSearch.getElement();
     var link = element.asText().getLinkUrl(citesSearch.getStartOffset());
     if (link && link.includes("#cite-mendeley")) {
-      var documentID = link.split("#")[1].replace("cite-mendeley-", "");
-      cites.push(documentID);
+      var documentIDs = link.split("#cite-mendeley+")[1].split("+")[0].split("|");
+      for (var i = 0; i < documentIDs.length; i++) {
+        cites.push(documentIDs[i]);
+      }
     }
     citesSearch = body.findText(`​`, citesSearch);
   }
