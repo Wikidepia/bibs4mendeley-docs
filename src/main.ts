@@ -1,5 +1,10 @@
 "use strict";
 
+// https://stackoverflow.com/a/3561711
+function escapeRegex(str: string) {
+  return str.replace(/[/\-\\^$*+?.()|[\]{}]/g, "\\$&");
+}
+
 function onOpen(e: GoogleAppsScript.Events.DocsOnOpen) {
   var ui = DocumentApp.getUi();
   ui.createMenu("Bibs for Mendeley")
@@ -96,17 +101,8 @@ function doCite(documentIDs: string[]) {
     bibtexes.push(bibtex);
   }
 
-  var apiConvert = UrlFetchApp.fetch(
-    `https://bibtex-converter.wikidepia.workers.dev/convert/${citationStyle}`,
-    {
-      method: "post",
-      payload: JSON.stringify(bibtexes),
-    }
-  );
-  var apiResult = JSON.parse(apiConvert.getContentText());
-
-  // Insert citation
-  insertCitation(apiResult["citation"], documentIDs);
+  // Insert temp citation
+  insertCitation("(temp)", documentIDs);
 
   // Insert bibliography
   insertBibliography(false);
@@ -165,24 +161,38 @@ function insertCitation(citation: string, documentIDs: string[]) {
   text.setLinkUrl(
     text.getText().length - 1,
     text.getText().length - 1,
-    `#cite-mendeley+${documentIDs.join('|')}+${citation.length}`
+    `#cite-mendeley+${documentIDs.join("|")}+${citation.length}`
   );
 }
 
 function insertBibliography(createNew: boolean = true) {
+  var cache = CacheService.getScriptCache();
   var baseDoc = DocumentApp.getActiveDocument();
   var body = baseDoc.getBody();
 
+  var bibtexIDs = [];
   var cites = [];
   var citesSearch = body.findText(`​`);
   while (citesSearch != null) {
     var element = citesSearch.getElement();
     var link = element.asText().getLinkUrl(citesSearch.getStartOffset());
     if (link && link.includes("#cite-mendeley")) {
-      var documentIDs = link.split("#cite-mendeley+")[1].split("+")[0].split("|");
+      var xx = []
+      var documentIDs = link
+        .split("#cite-mendeley+")[1]
+        .split("+")[0]
+        .split("|");
       for (var i = 0; i < documentIDs.length; i++) {
+        var bibtex = cache.get(`bibtex-${documentIDs[i]}`);
+        if (!bibtex) {
+          bibtex = getDocumentBibtex(documentIDs[i]);
+          cache.put(`bibtex-${documentIDs[i]}`, bibtex);
+        }
+        var bibtexID = bibtex.split("\n")[0].split("{")[1].split(",")[0];
+        xx.push(bibtexID);
         cites.push(documentIDs[i]);
       }
+      bibtexIDs.push(xx);
     }
     citesSearch = body.findText(`​`, citesSearch);
   }
@@ -216,7 +226,6 @@ function insertBibliography(createNew: boolean = true) {
   }
 
   var bibtexes = [];
-  var cache = CacheService.getScriptCache();
   for (var i = 0; i < cites.length; i++) {
     var documentID = cites[i];
     var bibtex = cache.get(`bibtex-${documentID}`);
@@ -233,12 +242,13 @@ function insertBibliography(createNew: boolean = true) {
     `https://bibtex-converter.wikidepia.workers.dev/convert/${citationStyle}`,
     {
       method: "post",
-      payload: JSON.stringify(bibtexes),
+      payload: JSON.stringify({ bibtexes: bibtexes, citations: bibtexIDs }),
     }
   );
   var apiResult = JSON.parse(apiConvert.getContentText());
   var biblios = apiResult["bibliography"].split("\n");
 
+  // Write bibliography to table
   for (var i = 0; i < biblios.length; i++) {
     if (biblios[i].trim().length == 0) {
       continue;
@@ -253,5 +263,39 @@ function insertBibliography(createNew: boolean = true) {
       .setLinkUrl(0, 0, `#bibs-mendeley-${cites[i]}`);
     cell.setPaddingBottom(0).setPaddingTop(0);
     cell.setPaddingLeft(0).setPaddingRight(0);
+  }
+
+  // Update all citations with new index
+  var citeMarkOffsets = [];
+  var citeCnt = 0;
+  var citesSearch = body.findText(`​`);
+  while (citesSearch != null) {
+    var newCitesSearch = body.findText(`​`, citesSearch);
+    var element = citesSearch.getElement();
+    var link = element.asText().getLinkUrl(citesSearch.getStartOffset());
+    if (link && link.includes("#cite-mendeley")) {
+      citeMarkOffsets.push(citesSearch.getStartOffset());
+      var citation = apiResult["citations"][citeCnt];
+      var curCiteLength = parseInt(link.split("+")[2]);
+      var ciText = element.asText();
+      ciText.deleteText(
+        citesSearch.getStartOffset() - curCiteLength,
+        citesSearch.getStartOffset()
+      );
+      ciText.insertText(
+        citesSearch.getStartOffset() - curCiteLength,
+        citation + `​`
+      );
+      var newMarkerOffset =
+        citesSearch.getStartOffset() - curCiteLength + citation.length;
+      ciText
+        .setLinkUrl(
+          newMarkerOffset,
+          newMarkerOffset,
+          link.slice(0, -1) + citation.length.toString()
+        );
+      citeCnt++;
+    }
+    citesSearch = newCitesSearch;
   }
 }

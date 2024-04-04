@@ -96,6 +96,11 @@
             button.className = "blue";
             checkboxes.forEach((c) => (c.checked = false));
           })
+          .withFailureHandler(function (e) {
+            var newDiv = document.createElement("div");
+            newDiv.innerHTML = "Error: " + e;
+            newDiv.style = "color: red;";
+          })
           .doCite(documentIDs);
       }
 
