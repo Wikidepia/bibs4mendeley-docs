@@ -226,15 +226,11 @@ function insertBibliography(createNew: boolean = true) {
   var bibtexes = cites.map((documentID) => getDocumentBibtex(documentID));
   const citationStyle =
     PropertiesService.getDocumentProperties().getProperty("citationStyle");
-  var apiConvert = UrlFetchApp.fetch(
-    `https://bibtex-converter.wikidepia.workers.dev/convert/${citationStyle}`,
-    {
-      method: "post",
-      payload: JSON.stringify({ bibtexes: bibtexes, citations: bibtexIDs }),
-    }
-  );
-  var apiResult = JSON.parse(apiConvert.getContentText());
-  var biblios = apiResult["bibliography"].split("\n");
+  if (!citationStyle) {
+    return;
+  }
+  const citationJSResult = doCitationJS(citationStyle, bibtexes, bibtexIDs);
+  var biblios = citationJSResult["bibliography"].split("\n");
 
   // Write bibliography to table
   for (var i = 0; i < biblios.length; i++) {
@@ -262,7 +258,7 @@ function insertBibliography(createNew: boolean = true) {
     var link = element.asText().getLinkUrl(citesSearch.getStartOffset());
     if (link && link.includes("#cite-mendeley")) {
       const oldMarkerOffset = citesSearch.getStartOffset();
-      var citation = apiResult["citations"][citeCnt];
+      var citation = citationJSResult["citations"][citeCnt];
       var curCiteLength = parseInt(link.split("+")[2]);
       var ciText = element.asText();
 
