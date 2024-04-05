@@ -109,36 +109,6 @@ function doCite(documentIDs: string[]) {
   insertBibliography(false);
 }
 
-function insertNewBibliographyIndex(bibliography: string, documentID: string) {
-  var doc = DocumentApp.getActiveDocument();
-  var body = doc.getBody();
-
-  // Check if table exists
-  var tables = body.getTables();
-  var table = null as GoogleAppsScript.Document.Table | null;
-  for (var i = 0; i < tables.length; i++) {
-    var tableText = tables[i].getCell(0, 0).editAsText().getLinkUrl(0) || "";
-    if (tableText.includes("#bibs-mendeley")) {
-      table = tables[i];
-    }
-  }
-
-  if (!table) {
-    return;
-  }
-  // Append new row
-  var row = table.appendTableRow();
-  var cell = row.appendTableCell();
-  cell.setText(bibliography.trim());
-
-  cell
-    .editAsText()
-    .insertText(0, `​`) // Zero-width space
-    .setLinkUrl(0, 0, `#bibs-mendeley-${documentID}`);
-  cell.setPaddingBottom(0).setPaddingTop(0);
-  cell.setPaddingLeft(0).setPaddingRight(0);
-}
-
 // From: https://stackoverflow.com/a/59711275
 function insertCitation(citation: string, documentIDs: string[]) {
   var baseDoc = DocumentApp.getActiveDocument();
