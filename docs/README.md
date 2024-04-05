@@ -2,6 +2,12 @@
 permalink: /
 ---
 
+## Table of Contents
+0. [Home](#home)
+1. [Terms of Service](/tos)
+2. [Privacy Policy](/privacy-policy)
+3. [FAQ](#faq)
+
 # Home
 
 Bibs for Mendeley simplifies the process of citing sources in your research papers. It seamlessly integrates with your Mendeley library, allowing you to insert properly formatted in-text citations and bibliographies in your documents with just a few clicks.
