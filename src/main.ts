@@ -149,7 +149,7 @@ function insertBibliography(createNew: boolean = true) {
     var link = element.asText().getLinkUrl(citesSearch.getStartOffset());
     markerLinks.push(link);
     if (link && link.includes("#cite-mendeley")) {
-      var xx = [];
+      var bibtexIDLink = [];
       var documentIDs = link
         .split("#cite-mendeley+")[1]
         .split("+")[0]
@@ -157,11 +157,11 @@ function insertBibliography(createNew: boolean = true) {
       for (var i = 0; i < documentIDs.length; i++) {
         var bibtex = getDocumentBibtex(documentIDs[i]);
         var bibtexID = bibtex.split("\n")[0].split("{")[1].split(",")[0];
-        xx.push(bibtexID);
+        bibtexIDLink.push(bibtexID);
         if (!cites.includes(documentIDs[i]))
           cites.push(documentIDs[i]);
       }
-      bibtexIDs.push(xx);
+      bibtexIDs.push(bibtexIDLink);
     }
     citesSearch = body.findText(`​`, citesSearch);
   }
@@ -222,30 +222,33 @@ function insertBibliography(createNew: boolean = true) {
   }
 
   // Update all citations with new index
-  var ccnt = 0;
-  var citeCnt = 0;
+  var searchCnt = 0, citeCnt = 0;
   var citesSearch = body.findText(`​`);
   while (citesSearch != null) {
     const oldMarkerOffset = citesSearch.getStartOffset();
     var element = citesSearch.getElement();
     var afterSearchLink = element.asText().getLinkUrl(oldMarkerOffset);
-    var link = markerLinks[ccnt];
+    var link = markerLinks[searchCnt];
+
+    // Skip if link is different, which means
+    // it is already updated
     if (afterSearchLink != link) {
       citesSearch = body.findText(`​`, citesSearch);
       continue;
     }
-    ccnt++;
+    searchCnt++;
+
     if (link && link.includes("#cite-mendeley")) {
-      var citation = citationJSResult["citations"][citeCnt];
-      var curCiteLength = parseInt(link.split("+")[2]);
-      var ciText = element.asText();
+      const citation = citationJSResult["citations"][citeCnt];
+      const curCiteLength = parseInt(link.split("+")[2]);
+      const ciText = element.asText();
 
       // Replace old citation with new citation
       ciText.deleteText(oldMarkerOffset - curCiteLength, oldMarkerOffset);
       ciText.insertText(oldMarkerOffset - curCiteLength, citation + `​`);
 
       // Update marker linkURL
-      var newMarkerOffset = oldMarkerOffset - curCiteLength + citation.length;
+      const newMarkerOffset = oldMarkerOffset - curCiteLength + citation.length;
       ciText.setLinkUrl(
         newMarkerOffset,
         newMarkerOffset,
