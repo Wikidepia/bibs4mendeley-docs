@@ -102,18 +102,6 @@ function getDocumentBibtex(document_id: string) {
 }
 
 function doCite(documentIDs: string[]) {
-  const citationStyle =
-    PropertiesService.getDocumentProperties().getProperty("citationStyle");
-
-  var bibtexes = [];
-  for (var i = 0; i < documentIDs.length; i++) {
-    var documentID = documentIDs[i];
-    var bibtex = getDocumentBibtex(documentID);
-    var cache = CacheService.getScriptCache();
-    cache.put(`bibtex-${documentID}`, bibtex);
-    bibtexes.push(bibtex);
-  }
-
   // Insert temp citation
   insertCitation("(temp)", documentIDs);
 
@@ -213,6 +201,7 @@ function insertBibliography(createNew: boolean = true) {
     var tableText = tables[i].getCell(0, 0).editAsText().getLinkUrl(0) || "";
     if (tableText.includes("#bibs-mendeley")) {
       table = tables[i];
+      break;
     }
   }
 
@@ -265,7 +254,6 @@ function insertBibliography(createNew: boolean = true) {
   }
 
   // Update all citations with new index
-  var citeMarkOffsets = [];
   var citeCnt = 0;
   var citesSearch = body.findText(`​`);
   while (citesSearch != null) {
@@ -273,24 +261,21 @@ function insertBibliography(createNew: boolean = true) {
     var element = citesSearch.getElement();
     var link = element.asText().getLinkUrl(citesSearch.getStartOffset());
     if (link && link.includes("#cite-mendeley")) {
-      citeMarkOffsets.push(citesSearch.getStartOffset());
+      const oldMarkerOffset = citesSearch.getStartOffset();
       var citation = apiResult["citations"][citeCnt];
       var curCiteLength = parseInt(link.split("+")[2]);
       var ciText = element.asText();
-      ciText.deleteText(
-        citesSearch.getStartOffset() - curCiteLength,
-        citesSearch.getStartOffset()
-      );
-      ciText.insertText(
-        citesSearch.getStartOffset() - curCiteLength,
-        citation + `​`
-      );
-      var newMarkerOffset =
-        citesSearch.getStartOffset() - curCiteLength + citation.length;
+
+      // Replace old citation with new citation
+      ciText.deleteText(oldMarkerOffset - curCiteLength, oldMarkerOffset);
+      ciText.insertText(oldMarkerOffset - curCiteLength, citation + `​`);
+
+      // Update marker linkURL
+      var newMarkerOffset = oldMarkerOffset - curCiteLength + citation.length;
       ciText.setLinkUrl(
         newMarkerOffset,
         newMarkerOffset,
-        link.slice(0, -1) + citation.length.toString()
+        link.split("+").slice(0, 2).join("+") + "+" + citation.length.toString()
       );
       citeCnt++;
     }
