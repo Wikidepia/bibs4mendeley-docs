@@ -4,9 +4,11 @@ This is a Google Docs add-on that allows you to insert citations from your Mende
 
 ## TODO
 
-- [ ] Add support for numbering citation style like IEEE
+- [x] Add support for numbering citation style like IEEE
 - [ ] Add support for changing citation style
 
 ## Credits
 
 - [google-docs-mendeley](https://github.com/terminological/google-docs-mendeley) from terminological
+- [citation-js](https://github.com/citation-js/citation-js) by Lars Willighagen
+ 
