@@ -4,8 +4,8 @@ permalink: /
 
 ## Table of Contents
 0. [Home](#home)
-1. [Terms of Service](/tos)
-2. [Privacy Policy](/privacy-policy)
+1. [Terms of Service](tos)
+2. [Privacy Policy](privacy-policy)
 3. [FAQ](#faq)
 
 # Home
