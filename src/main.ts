@@ -60,20 +60,31 @@ function openLibrary() {
 }
 
 function getDocuments(folder_id: string) {
-  var service = getService_();
-  var response = UrlFetchApp.fetch(
-    `https://api.mendeley.com/documents?folder_id=${folder_id}`,
-    {
-      headers: {
-        Authorization: "Bearer " + service.getAccessToken(),
-      },
-    }
-  );
-  var documents = JSON.parse(response.getContentText());
-  return documents;
+  var cache = CacheService.getUserCache();
+  var documents = cache.get(`documents-${folder_id}`);
+  if (!documents) {
+    var service = getService_();
+    var response = UrlFetchApp.fetch(
+      `https://api.mendeley.com/documents?folder_id=${folder_id}`,
+      {
+        headers: {
+          Authorization: "Bearer " + service.getAccessToken(),
+        },
+      }
+    );
+    documents = response.getContentText();
+    cache.put(`documents-${folder_id}`, documents, 24 * 60 * 60);
+  }
+  return JSON.parse(documents);
 }
 
 function getDocumentBibtex(document_id: string) {
+  var cache = CacheService.getUserCache();
+  var bibtex = cache.get(`bibtex-${document_id}`);
+  if (bibtex) {
+    return bibtex;
+  }
+
   var service = getService_();
   var response = UrlFetchApp.fetch(
     `https://api.mendeley.com/documents/${document_id}`,
@@ -85,7 +96,9 @@ function getDocumentBibtex(document_id: string) {
       contentType: "application/x-bibtex",
     }
   );
-  return response.getContentText();
+  bibtex = response.getContentText();
+  cache.put(`bibtex-${document_id}`, bibtex, 24 * 60 * 60);
+  return bibtex;
 }
 
 function doCite(documentIDs: string[]) {
@@ -166,7 +179,6 @@ function insertCitation(citation: string, documentIDs: string[]) {
 }
 
 function insertBibliography(createNew: boolean = true) {
-  var cache = CacheService.getScriptCache();
   var baseDoc = DocumentApp.getActiveDocument();
   var body = baseDoc.getBody();
 
@@ -177,17 +189,13 @@ function insertBibliography(createNew: boolean = true) {
     var element = citesSearch.getElement();
     var link = element.asText().getLinkUrl(citesSearch.getStartOffset());
     if (link && link.includes("#cite-mendeley")) {
-      var xx = []
+      var xx = [];
       var documentIDs = link
         .split("#cite-mendeley+")[1]
         .split("+")[0]
         .split("|");
       for (var i = 0; i < documentIDs.length; i++) {
-        var bibtex = cache.get(`bibtex-${documentIDs[i]}`);
-        if (!bibtex) {
-          bibtex = getDocumentBibtex(documentIDs[i]);
-          cache.put(`bibtex-${documentIDs[i]}`, bibtex);
-        }
+        var bibtex = getDocumentBibtex(documentIDs[i]);
         var bibtexID = bibtex.split("\n")[0].split("{")[1].split(",")[0];
         xx.push(bibtexID);
         cites.push(documentIDs[i]);
@@ -225,17 +233,7 @@ function insertBibliography(createNew: boolean = true) {
     table.removeRow(i);
   }
 
-  var bibtexes = [];
-  for (var i = 0; i < cites.length; i++) {
-    var documentID = cites[i];
-    var bibtex = cache.get(`bibtex-${documentID}`);
-    if (!bibtex) {
-      bibtex = getDocumentBibtex(documentID);
-      cache.put(`bibtex-${documentID}`, bibtex);
-    }
-    bibtexes.push(bibtex);
-  }
-
+  var bibtexes = cites.map((documentID) => getDocumentBibtex(documentID));
   const citationStyle =
     PropertiesService.getDocumentProperties().getProperty("citationStyle");
   var apiConvert = UrlFetchApp.fetch(
@@ -288,12 +286,11 @@ function insertBibliography(createNew: boolean = true) {
       );
       var newMarkerOffset =
         citesSearch.getStartOffset() - curCiteLength + citation.length;
-      ciText
-        .setLinkUrl(
-          newMarkerOffset,
-          newMarkerOffset,
-          link.slice(0, -1) + citation.length.toString()
-        );
+      ciText.setLinkUrl(
+        newMarkerOffset,
+        newMarkerOffset,
+        link.slice(0, -1) + citation.length.toString()
+      );
       citeCnt++;
     }
     citesSearch = newCitesSearch;
