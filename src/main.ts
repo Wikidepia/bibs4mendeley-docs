@@ -170,12 +170,14 @@ function insertBibliography(createNew: boolean = true) {
   var baseDoc = DocumentApp.getActiveDocument();
   var body = baseDoc.getBody();
 
+  var markerLinks = [] as string[];
   var bibtexIDs = [];
   var cites = [] as string[];
   var citesSearch = body.findText(`​`);
   while (citesSearch != null) {
     var element = citesSearch.getElement();
     var link = element.asText().getLinkUrl(citesSearch.getStartOffset());
+    markerLinks.push(link);
     if (link && link.includes("#cite-mendeley")) {
       var xx = [];
       var documentIDs = link
@@ -250,14 +252,20 @@ function insertBibliography(createNew: boolean = true) {
   }
 
   // Update all citations with new index
+  var ccnt = 0;
   var citeCnt = 0;
   var citesSearch = body.findText(`​`);
   while (citesSearch != null) {
-    var newCitesSearch = body.findText(`​`, citesSearch);
+    const oldMarkerOffset = citesSearch.getStartOffset();
     var element = citesSearch.getElement();
-    var link = element.asText().getLinkUrl(citesSearch.getStartOffset());
+    var afterSearchLink = element.asText().getLinkUrl(oldMarkerOffset);
+    var link = markerLinks[ccnt];
+    if (afterSearchLink != link) {
+      citesSearch = body.findText(`​`, citesSearch);
+      continue;
+    }
+    ccnt++;
     if (link && link.includes("#cite-mendeley")) {
-      const oldMarkerOffset = citesSearch.getStartOffset();
       var citation = citationJSResult["citations"][citeCnt];
       var curCiteLength = parseInt(link.split("+")[2]);
       var ciText = element.asText();
@@ -275,6 +283,6 @@ function insertBibliography(createNew: boolean = true) {
       );
       citeCnt++;
     }
-    citesSearch = newCitesSearch;
+    citesSearch = body.findText(`​`, citesSearch);
   }
 }
