@@ -183,7 +183,7 @@ function insertBibliography(createNew: boolean = true) {
   var body = baseDoc.getBody();
 
   var bibtexIDs = [];
-  var cites = [];
+  var cites = [] as string[];
   var citesSearch = body.findText(`​`);
   while (citesSearch != null) {
     var element = citesSearch.getElement();
@@ -198,7 +198,8 @@ function insertBibliography(createNew: boolean = true) {
         var bibtex = getDocumentBibtex(documentIDs[i]);
         var bibtexID = bibtex.split("\n")[0].split("{")[1].split(",")[0];
         xx.push(bibtexID);
-        cites.push(documentIDs[i]);
+        if (!cites.includes(documentIDs[i]))
+          cites.push(documentIDs[i]);
       }
       bibtexIDs.push(xx);
     }
