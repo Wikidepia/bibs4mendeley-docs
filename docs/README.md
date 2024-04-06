@@ -7,6 +7,7 @@ permalink: /
 1. [Terms of Service](tos)
 2. [Privacy Policy](privacy-policy)
 3. [FAQ](#faq)
+4. [Issues?](#issues)
 
 # Home
 
@@ -19,3 +20,7 @@ This powerful tool eliminates the need for manual citation formatting, saving yo
 ## How do I install Bibs for Mendeley?
 
 To install Bibs for Mendeley, simply visit the [Google Workspace Marketplace](https://workspace.google.com/marketplace/), search for "Bibs for Mendeley" and click the "Install" button. Once installed, you can access Bibs for Mendeley directly from Google Docs.
+
+# Issues
+
+If you encounter any issues or have any feedback, please feel free to [submit an issue on GitHub](https://github.com/Wikidepia/bibs4mendeley-docs/issues). You can also reach out to us via email at [bibs@akmal.dev](mailto:bibs@akmal.dev). We appreciate your feedback and will do our best to address any concerns promptly. 
