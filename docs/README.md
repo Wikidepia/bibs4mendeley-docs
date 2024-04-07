@@ -2,14 +2,6 @@
 permalink: /
 ---
 
-## Table of Contents
-
-0. [Home](#home)
-1. [Terms of Service](tos)
-2. [Privacy Policy](privacy-policy)
-3. [FAQ](#faq)
-4. [Issues?](#issues)
-
 Bibs for Mendeley simplifies the process of citing sources in Google Docs. It seamlessly integrates with your Mendeley library, allowing you to insert properly formatted in-text citations and bibliographies in your Google Docs documents with just a few clicks.
 
 This powerful tool eliminates the need for manual citation formatting, saving you time and effort. It supports most major citation styles, including APA, Vancouver, and Harvard, so you can focus on the substance of your writing rather than the technical details of citation formatting.
@@ -23,3 +15,8 @@ To install Bibs for Mendeley, simply visit the [Google Workspace Marketplace](ht
 # Issues
 
 If you encounter any issues or have any feedback, please feel free to [submit an issue on GitHub](https://github.com/Wikidepia/bibs4mendeley-docs/issues). You can also reach out to us via email at [bibs@akmal.dev](mailto:bibs@akmal.dev). We appreciate your feedback and will do our best to address any concerns promptly. 
+
+# Important Links
+
+- [Privacy Policy](privacy-policy)
+- [Terms of Service](tos)
