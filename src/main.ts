@@ -25,12 +25,14 @@ function mendeleyLogin() {
   );
   template.authorizationUrl = authorizationUrl;
   var page = template.evaluate();
+  page.setTitle("Bibs for Mendeley Authorization");
   DocumentApp.getUi().showSidebar(page);
 }
 
 function mendeleySetting() {
   var template = HtmlService.createTemplateFromFile("templates/setting.html");
   var page = template.evaluate();
+  page.setTitle("Bibs for Mendeley Setting");
   DocumentApp.getUi().showSidebar(page);
 }
 
@@ -56,6 +58,7 @@ function openLibrary() {
   var template = HtmlService.createTemplateFromFile("templates/libraries.html");
   template.folders = folders;
   var page = template.evaluate();
+  page.setTitle("Bibs for Mendeley Libraries");
   DocumentApp.getUi().showSidebar(page);
 }
 
