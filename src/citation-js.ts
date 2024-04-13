@@ -4,10 +4,10 @@ function doCitationJS(
   citations: string[][]
 ) {
   const citationJS = HtmlService.createTemplateFromFile(
-    "src/citation-js.v0.7.9.js.html"
+    "src/citation-js.lib.html"
   ).getRawContent();
   const Cite = new Function(
-    citationJS + "\nconst Cite = require('citation-js'); return Cite;"
+    citationJS + "\nconst cite = require('citation-js'); return cite.Cite;"
   )();
 
   const cite = new Cite(bibtexes);
