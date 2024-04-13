@@ -6,7 +6,7 @@
       rel="stylesheet"
       href="https://ssl.gstatic.com/docs/script/css/add-ons1.css"
     />
-    <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@0.7.31/dist/flexsearch.bundle.min.js"></script>
 
     <script>
       var searchIndex = null;
@@ -113,28 +113,41 @@
         if (query.length == 0) {
           return renderLibraries(searchIndex);
         }
-
-        var options = {
-          keys: [
-            "title",
-            "authors.first_name",
-            "authors.last_name",
-            "abstract",
-          ],
-          distance: 200,
-        };
-
-        var fuse = new Fuse(searchIndex, options);
-        var result = fuse.search(query);
-        var libraries = result.map((r) => r.item);
+        console.log(searchIndex);
+        var fuse = new FlexSearch.Document({
+          preset: "match",
+          charset: "latin:advanced",
+          document: {
+            id: "id",
+            index: ["title", "abstract"],
+          },
+        });
+        for (var i = 0; i < searchIndex.length; i++) {
+          var curDocument = searchIndex[i];
+          fuse.add(curDocument);
+        }
+        var resultIds = []
+        var searchResults = fuse.search(query);
+        for (var i = 0; i < searchResults.length; i++) {
+          var fieldResult = searchResults[i].result;
+          for (var j = 0; j < fieldResult.length; j++) {
+            resultIds.push(fieldResult[j]);
+          }
+        }
+        var libraries = [];
+        for (var i = 0; i < searchIndex.length; i++) {
+          var curDocument = searchIndex[i];
+          if (resultIds.includes(curDocument.id)) {
+            libraries.push(curDocument);
+          }
+        }
+        console.log(libraries)
         return renderLibraries(libraries);
       }
 
       // Load all articles when the page is first loaded
       window.onload = function (e) {
-        google.script.run
-          .withSuccessHandler(renderLibraries)
-          .getDocuments("");
+        google.script.run.withSuccessHandler(renderLibraries).getDocuments("");
       };
     </script>
   </head>
