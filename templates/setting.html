@@ -10,7 +10,8 @@
     <script>
       function saveSetting() {
         var citationStyle = document.getElementById("citation-style");
-        var citationValue = citationStyle.options[citationStyle.selectedIndex].value;
+        var citationValue =
+          citationStyle.options[citationStyle.selectedIndex].value;
         google.script.run.saveSetting(citationValue);
       }
     </script>
@@ -24,18 +25,19 @@
     </style>
 
     <div class="sidebar branding-below">
-      <div class="block form-group" style="width: 100%;">
+      <div class="block form-group" style="width: 100%">
         <label for="translated-text">Citation style:</label>
         <select id="citation-style" onchange="selectFolders(event)">
-            <option value="apa">APA</option>
-            <option value="vancouver">Vancouver</option>
-            <option value="harvard">Harvard</option>
+          <option value="apa">APA</option>
+          <option value="vancouver">Vancouver</option>
+          <option value="harvard">Harvard</option>
         </select>
       </div>
 
       <div class="block form-group">
         <button class="blue" onclick="saveSetting()">Save</button>
-        </div>
+      </div>
+    </div>
 
     <div class="sidebar bottom">
       <span class="gray"> This add-ons is not created by Mendeley.</span>
