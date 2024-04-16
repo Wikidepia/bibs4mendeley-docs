@@ -42,9 +42,9 @@ function authCallback(request: object) {
   var service = getService_();
   var authorized = service.handleCallback(request);
   if (authorized) {
-    return HtmlService.createHtmlOutput("Success!");
+    return HtmlService.createHtmlOutput("Success! You can close this tab.");
   } else {
-    return HtmlService.createHtmlOutput("Denied.");
+    return HtmlService.createHtmlOutput("Failed to authorize, please try again.");
   }
 }
 
