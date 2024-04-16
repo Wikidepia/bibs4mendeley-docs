@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top" />
+    <link
+      rel="stylesheet"
+      href="https://ssl.gstatic.com/docs/script/css/add-ons1.css"
+    />
+
+    <script>
+      function saveSetting() {
+        var citationStyle = document.getElementById("citation-style");
+        var citationValue =
+          citationStyle.options[citationStyle.selectedIndex].value;
+        google.script.run.saveSetting(citationValue);
+      }
+    </script>
+  </head>
+  <body>
+    <style>
+      .branding-below {
+        bottom: 56px;
+        top: 0;
+      }
+    </style>
+
+    <div class="sidebar branding-below">
+      <div class="block form-group" style="width: 100%">
+        <h2>1. Click the following button to connect your Mendeley account.</h2>
+        <button class="blue" style="width: 100%;" onclick="window.open('<?= authorizationUrl ?>')">Connect Mendeley</button>
+        <hr>
+        <h2>2. After connecting your Mendeley account, click the following button to open your library.</h2>
+        <button class="blue" style="width: 100%;" onclick="google.script.run.openLibrary()">Open Library</button>
+    </div>
+    </div>
+
+    <div class="sidebar bottom">
+      <span class="gray"> This add-ons is not created by Mendeley.</span>
+    </div>
+  </body>
+</html>

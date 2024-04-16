@@ -8,8 +8,9 @@ function escapeRegex(str: string) {
 function onOpen(e: GoogleAppsScript.Events.DocsOnOpen) {
   var ui = DocumentApp.getUi();
   ui.createMenu("Bibs for Mendeley")
-    .addItem("Connect with Mendeley", "mendeleyLogin")
-    .addItem("Setting", "mendeleySetting")
+    .addItem("Connect Mendeley", "mendeleyLogin")
+    .addItem("Disconnect Mendeley", "mendeleyLogout")
+    .addItem("Citation/Bibs Settings", "mendeleySetting")
     .addSeparator()
     .addItem("Open library", "openLibrary")
     .addItem("Insert bibliography", "insertBibliography")
@@ -24,14 +25,17 @@ function mendeleyLogin() {
   }
 
   var authorizationUrl = service.getAuthorizationUrl();
-  var template = HtmlService.createTemplate(
-    '<a href="<?= authorizationUrl ?>" target="_blank">Authorize</a>. ' +
-      "Reopen the sidebar when the authorization is complete."
-  );
+  var template = HtmlService.createTemplateFromFile("templates/login.html");
   template.authorizationUrl = authorizationUrl;
   var page = template.evaluate();
   page.setTitle("Bibs for Mendeley Authorization");
   DocumentApp.getUi().showSidebar(page);
+}
+
+function mendeleyLogout() {
+  var service = getService_();
+  service.reset();
+  DocumentApp.getUi().alert("Disconnected Mendeley");
 }
 
 function mendeleySetting() {
@@ -166,8 +170,7 @@ function insertBibliography(createNew: boolean = true) {
         var bibtex = getDocumentBibtex(documentIDs[i]);
         var bibtexID = bibtex.split("\n")[0].split("{")[1].split(",")[0];
         bibtexIDLink.push(bibtexID);
-        if (!cites.includes(documentIDs[i]))
-          cites.push(documentIDs[i]);
+        if (!cites.includes(documentIDs[i])) cites.push(documentIDs[i]);
       }
       bibtexIDs.push(bibtexIDLink);
     }
@@ -230,7 +233,8 @@ function insertBibliography(createNew: boolean = true) {
   }
 
   // Update all citations with new index
-  var searchCnt = 0, citeCnt = 0;
+  var searchCnt = 0,
+    citeCnt = 0;
   var citesSearch = body.findText(`​`);
   while (citesSearch != null) {
     const oldMarkerOffset = citesSearch.getStartOffset();
