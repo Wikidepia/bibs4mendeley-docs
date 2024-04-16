@@ -18,6 +18,11 @@ function onOpen(e: GoogleAppsScript.Events.DocsOnOpen) {
 
 function mendeleyLogin() {
   var service = getService_();
+  // Check if already authorized
+  if (service.hasAccess()) {
+    return openLibrary();
+  }
+
   var authorizationUrl = service.getAuthorizationUrl();
   var template = HtmlService.createTemplate(
     '<a href="<?= authorizationUrl ?>" target="_blank">Authorize</a>. ' +
