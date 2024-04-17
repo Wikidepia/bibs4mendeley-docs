@@ -131,7 +131,7 @@ function getDocumentBibtex(document_id: string): string {
 
 function doCite(documentIDs: string[]) {
   // Insert temp citation
-  insertCitation("(temp)", documentIDs);
+  insertCitation("(BibliographyIsNotInserted)", documentIDs);
 
   // Insert bibliography
   insertBibliography(false);
