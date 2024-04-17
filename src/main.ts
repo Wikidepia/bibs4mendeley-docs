@@ -71,8 +71,17 @@ function openLibrary() {
   DocumentApp.getUi().showSidebar(page);
 }
 
+// Fetch documents to be showed in libraries sidebar
+// See templates/libraries.html
 function getDocuments(folder_id: string) {
-  var cache = CacheService.getUserCache();
+  var cache = CacheService.getDocumentCache();
+  if (!cache) {
+    DocumentApp.getUi().alert(
+      "Something went wrong when fetching documents. [ERR: Failed to get cache]"
+    );
+    throw new Error("Failed to get cache");
+  }
+
   var documents = cache.get(`documents-${folder_id}`);
   if (!documents) {
     var service = getService_();
@@ -85,13 +94,20 @@ function getDocuments(folder_id: string) {
       }
     );
     documents = response.getContentText();
-    cache.put(`documents-${folder_id}`, documents, 24 * 60 * 60);
+    cache.put(`documents-${folder_id}`, documents);
   }
   return JSON.parse(documents);
 }
 
-function getDocumentBibtex(document_id: string) {
-  var cache = CacheService.getUserCache();
+function getDocumentBibtex(document_id: string): string {
+  var cache = CacheService.getDocumentCache();
+  if (!cache) {
+    DocumentApp.getUi().alert(
+      "Something went wrong when fetching documents. [ERR: Failed to get cache]"
+    );
+    return "";
+  }
+
   var bibtex = cache.get(`bibtex-${document_id}`);
   if (bibtex) {
     return bibtex;
@@ -109,7 +125,7 @@ function getDocumentBibtex(document_id: string) {
     }
   );
   bibtex = response.getContentText();
-  cache.put(`bibtex-${document_id}`, bibtex, 24 * 60 * 60);
+  cache.put(`bibtex-${document_id}`, bibtex);
   return bibtex;
 }
 
@@ -168,6 +184,12 @@ function insertBibliography(createNew: boolean = true) {
         .split("|");
       for (var i = 0; i < documentIDs.length; i++) {
         var bibtex = getDocumentBibtex(documentIDs[i]);
+        if (bibtex.length == 0) {
+          DocumentApp.getUi().alert(
+            "Failed to fetch bibtex for document ID: " + documentIDs[i]
+          );
+          return;
+        }
         var bibtexID = bibtex.split("\n")[0].split("{")[1].split(",")[0];
         bibtexIDLink.push(bibtexID);
         if (!cites.includes(documentIDs[i])) cites.push(documentIDs[i]);
