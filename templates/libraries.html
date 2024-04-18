@@ -126,7 +126,7 @@
           var curDocument = searchIndex[i];
           fuse.add(curDocument);
         }
-        var resultIds = []
+        var resultIds = [];
         var searchResults = fuse.search(query);
         for (var i = 0; i < searchResults.length; i++) {
           var fieldResult = searchResults[i].result;
@@ -141,7 +141,6 @@
             libraries.push(curDocument);
           }
         }
-        console.log(libraries)
         return renderLibraries(libraries);
       }
 
@@ -157,10 +156,53 @@
         bottom: 56px;
         top: 0;
       }
+      .tabs {
+        margin-top: 0px;
+        margin-bottom: 5px;
+        padding: 0;
+        list-style: none;
+        position: relative;
+        border-bottom: 1px solid #ccc;
+      }
+      .active-tab {
+        border-top: 1px solid #ccc;
+        border-left: 1px solid #ccc;
+        border-right: 1px solid #ccc;
+        border-bottom: none;
+        position: relative;
+        color: black;
+      }
+      .active-tab:after {
+        width: 100%;
+        height: 2px;
+        position: absolute;
+        content: "";
+        bottom: -0.1em;
+        left: 0;
+        background: white;
+      }
+      .tabs > li {
+        display: inline-block;
+        cursor: pointer;
+        color: #3a5ea7;
+        padding: 5px 10px;
+      }
+      .tabs > li > :first-child {
+        margin-left: 10px;
+      }
     </style>
 
     <div class="sidebar branding-below">
       <div class="block form-group">
+        <ul class="tabs">
+          <li class="active-tab">Libraries</li>
+          <li
+            onclick="document.body.innerHTML = 'Loading...'; google.script.run.mendeleySetting();"
+          >
+            Settings
+          </li>
+        </ul>
+
         <label for="translated-text">Folders/Collections</label>
         <select
           name="documents"
@@ -173,10 +215,14 @@
           <option value="<?= folders[i].id ?>"><?= folders[i].name ?></option>
           <? } ?>
         </select>
-        <button class="blue" onclick="document.body.innerHTML = 'Refreshing...'; google.script.run.openLibrary();" style="width: 100%; margin-top: 5px;">
+        <button
+          class="blue"
+          onclick="document.body.innerHTML = 'Refreshing...'; google.script.run.openLibrary();"
+          style="width: 100%; margin-top: 5px"
+        >
           REFRESH
         </button>
-        <hr>
+        <hr />
       </div>
 
       <div class="block form-group">

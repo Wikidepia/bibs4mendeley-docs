@@ -10,10 +10,9 @@ function onOpen(e: GoogleAppsScript.Events.DocsOnOpen) {
   ui.createMenu("Bibs for Mendeley")
     .addItem("Connect Mendeley", "mendeleyLogin")
     .addItem("Disconnect Mendeley", "mendeleyLogout")
-    .addItem("Citation/Bibs Settings", "mendeleySetting")
     .addSeparator()
-    .addItem("Open library", "openLibrary")
-    .addItem("Insert bibliography", "insertBibliography")
+    .addItem("Open Library", "openLibrary")
+    .addItem("Insert Bibliography", "insertBibliography")
     .addToUi();
 }
 
