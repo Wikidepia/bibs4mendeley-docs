@@ -12,10 +12,21 @@
     />
     <script>
       function saveSetting() {
-        var citationStyle = document.getElementById("citation-style");
-        var citationValue =
-          citationStyle.options[citationStyle.selectedIndex].value;
-        google.script.run.saveSetting(citationValue);
+        const button = document.getElementById("save-button");
+        button.innerText = "Saving...";
+        button.disabled = true;
+        button.className = "gray";
+
+        const citationStyleSelect = document.getElementById("citation-style");
+        const citationStyle =
+          citationStyleSelect.options[citationStyleSelect.selectedIndex].value;
+        google.script.run
+          .withSuccessHandler(function () {
+            button.innerText = "Save";
+            button.disabled = false;
+            button.className = "blue";
+          })
+          .saveSetting(citationStyle);
       }
     </script>
   </head>
@@ -36,7 +47,14 @@
       </div>
 
       <div class="block form-group">
-        <button class="blue" onclick="saveSetting()">Save</button>
+        <button
+          class="blue"
+          id="save-button"
+          style="width: 100%"
+          onclick="saveSetting()"
+        >
+          Save
+        </button>
       </div>
     </div>
 
