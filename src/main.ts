@@ -68,6 +68,10 @@ function saveSetting(citationStyle: string) {
   const ui = DocumentApp.getUi();
   const documentProperties = PropertiesService.getDocumentProperties();
   documentProperties.setProperty("citationStyle", citationStyle);
+
+  // Refresh bibliography
+  insertBibliography(false);
+
   ui.alert("Setting saved");
 }
 
