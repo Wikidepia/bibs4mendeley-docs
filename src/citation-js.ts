@@ -1,19 +1,27 @@
 function doCitationJS(
-  template: string,
+  templateName: string,
   bibtexes: string[],
   citations: string[][]
 ) {
   const citationJS = HtmlService.createTemplateFromFile(
     "src/citation-js.lib.html"
   ).getRawContent();
-  const Cite = new Function(
-    citationJS + "\nconst cite = require('citation-js'); return cite.Cite;"
+  const citeJS = new Function(
+    citationJS + "\nconst cite = require('citation-js'); return cite;"
   )();
 
-  const cite = new Cite(bibtexes);
+  let config = citeJS.plugins.config.get('@csl')
+  if (!["apa", "harvard", "vancouver"].includes(templateName)) {
+    const template = UrlFetchApp.fetch(
+      `https://zotero.org/styles/${templateName}`
+    ).getContentText();
+    config.templates.add(templateName, template)
+  }
+
+  const cite = new citeJS.Cite(bibtexes);
   const bibliography = cite.format("bibliography", {
     format: "text",
-    template: template,
+    template: templateName,
     lang: "en-US",
   });
 
@@ -27,7 +35,7 @@ function doCitationJS(
     );
     var citation = cite.format("citation", {
       format: "text",
-      template: template,
+      template: templateName,
       lang: "en-US",
       entry: citations[i],
       citationsPre: citationsPre,

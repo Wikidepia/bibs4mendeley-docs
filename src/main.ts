@@ -39,7 +39,26 @@ function mendeleyLogout() {
 }
 
 function mendeleySetting() {
+  // Load available citation styles
+  var styles = HtmlService.createTemplateFromFile(
+    "src/data/csl-nodep.json.html"
+  );
+  var stylesObj = JSON.parse(styles.getRawContent());
+
+  // Construct citation style options HTML
+  const citationStyle =
+    PropertiesService.getDocumentProperties().getProperty("citationStyle");
+  var stylesHTML = "";
+  for (var i = 0; i < stylesObj.length; i++) {
+    stylesHTML += `<option value="${stylesObj[i].name}"`;
+    if (stylesObj[i].name == citationStyle) {
+      stylesHTML += ` selected`;
+    }
+    stylesHTML += `>${stylesObj[i].title}</option>`;
+  }
+
   var template = HtmlService.createTemplateFromFile("templates/setting.html");
+  template.stylesHTML = stylesHTML;
   var page = template.evaluate();
   page.setTitle("Bibs for Mendeley Setting");
   DocumentApp.getUi().showSidebar(page);

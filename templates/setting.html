@@ -4,9 +4,12 @@
     <base target="_top" />
     <link
       rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"
+    />
+    <link
+      rel="stylesheet"
       href="https://ssl.gstatic.com/docs/script/css/add-ons1.css"
     />
-
     <script>
       function saveSetting() {
         var citationStyle = document.getElementById("citation-style");
@@ -25,12 +28,10 @@
     </style>
 
     <div class="sidebar branding-below">
-      <div class="block form-group" style="width: 100%">
+      <div class="block form-group">
         <label for="translated-text">Citation style:</label>
-        <select id="citation-style" onchange="selectFolders(event)">
-          <option value="apa">APA</option>
-          <option value="vancouver">Vancouver</option>
-          <option value="harvard">Harvard</option>
+        <select id="citation-style">
+          <?!= stylesHTML ?>
         </select>
       </div>
 
@@ -42,5 +43,16 @@
     <div class="sidebar bottom">
       <span class="gray"> This add-ons is not created by Mendeley.</span>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script>
+      const element = document.getElementById("citation-style");
+      document.addEventListener("DOMContentLoaded", (event) => {
+        const choices = new Choices(element, {
+          searchEnabled: true,
+          itemSelectText: "",
+          searchResultLimit: 20,
+        });
+      });
+    </script>
   </body>
 </html>

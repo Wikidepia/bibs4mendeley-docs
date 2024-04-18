@@ -173,6 +173,10 @@
           <option value="<?= folders[i].id ?>"><?= folders[i].name ?></option>
           <? } ?>
         </select>
+        <button class="blue" onclick="document.body.innerHTML = 'Refreshing...'; google.script.run.openLibrary();" style="width: 100%; margin-top: 5px;">
+          REFRESH
+        </button>
+        <hr>
       </div>
 
       <div class="block form-group">
