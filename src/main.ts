@@ -34,6 +34,10 @@ function mendeleyLogin() {
 function mendeleyLogout() {
   var service = getService_();
   service.reset();
+
+  // Close sidebar (https://stackoverflow.com/a/63844458)
+  var closeSidebar = HtmlService.createHtmlOutput("<script>google.script.host.close();</script>");
+  DocumentApp.getUi().showSidebar(closeSidebar);
   DocumentApp.getUi().alert("Disconnected Mendeley");
 }
 
