@@ -136,15 +136,9 @@ function getDocuments(folder_id: string) {
 }
 
 function getDocumentBibtex(document_id: string): string {
-  var cache = CacheService.getDocumentCache();
-  if (!cache) {
-    DocumentApp.getUi().alert(
-      "Something went wrong when fetching documents. [ERR: Failed to get cache]"
-    );
-    return "";
-  }
+  var documentProperties = PropertiesService.getDocumentProperties();
 
-  var bibtex = cache.get(`bibtex-${document_id}`);
+  var bibtex = documentProperties.getProperty(`bibtex-${document_id}`);
   if (bibtex) {
     return bibtex;
   }
@@ -161,7 +155,7 @@ function getDocumentBibtex(document_id: string): string {
     }
   );
   bibtex = response.getContentText();
-  cache.put(`bibtex-${document_id}`, bibtex);
+  documentProperties.setProperty(`bibtex-${document_id}`, bibtex);
   return bibtex;
 }
 
