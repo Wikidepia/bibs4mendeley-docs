@@ -118,28 +118,16 @@ function getDocuments(folder_id: string) {
   const documentProperties = PropertiesService.getDocumentProperties();
   const groupID = documentProperties.getProperty("groupID");
 
-  var cache = CacheService.getDocumentCache();
-  if (!cache) {
-    DocumentApp.getUi().alert(
-      "Something went wrong when fetching documents. [ERR: Failed to get cache]"
-    );
-    throw new Error("Failed to get cache");
-  }
-
-  var documents = cache.get(`documents-${folder_id}-${groupID}`);
-  if (!documents) {
-    var service = getService_();
-    var response = UrlFetchApp.fetch(
-      `https://api.mendeley.com/documents?folder_id=${folder_id}&group_id=${groupID}`,
-      {
-        headers: {
-          Authorization: "Bearer " + service.getAccessToken(),
-        },
-      }
-    );
-    documents = response.getContentText();
-    cache.put(`documents-${folder_id}-${groupID}`, documents);
-  }
+  var service = getService_();
+  var response = UrlFetchApp.fetch(
+    `https://api.mendeley.com/documents?folder_id=${folder_id}&group_id=${groupID}`,
+    {
+      headers: {
+        Authorization: "Bearer " + service.getAccessToken(),
+      },
+    }
+  );
+  const documents = response.getContentText();
   return JSON.parse(documents);
 }
 
