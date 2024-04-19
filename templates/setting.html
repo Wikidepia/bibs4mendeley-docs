@@ -20,13 +20,17 @@
         const citationStyleSelect = document.getElementById("citation-style");
         const citationStyle =
           citationStyleSelect.options[citationStyleSelect.selectedIndex].value;
+        
+        const groupSelect = document.getElementById("shared-groups");
+        const groupID = groupSelect.options[groupSelect.selectedIndex].value;
+
         google.script.run
           .withSuccessHandler(function () {
             button.innerText = "Save";
             button.disabled = false;
             button.className = "blue";
           })
-          .saveSetting(citationStyle);
+          .saveSetting(citationStyle, groupID);
       }
     </script>
   </head>
@@ -86,6 +90,11 @@
         <label for="translated-text">Citation style:</label>
         <select id="citation-style">
           <?!= stylesHTML ?>
+        </select>
+
+        <label>Choose shared groups:</label>
+        <select id="shared-groups" style="width: 100%; max-width: 100%;">
+          <?!= groupsHTML ?>
         </select>
       </div>
 

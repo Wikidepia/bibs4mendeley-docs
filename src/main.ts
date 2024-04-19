@@ -38,46 +38,65 @@ function mendeleyLogout() {
 }
 
 function mendeleySetting() {
+  const documentProperties = PropertiesService.getDocumentProperties();
   // Load available citation styles
   var styles = HtmlService.createTemplateFromFile(
     "src/data/csl-nodep.json.html"
   );
   var stylesObj = JSON.parse(styles.getRawContent());
 
+  const citationStyle = documentProperties.getProperty("citationStyle");
+  const groupID = documentProperties.getProperty("groupID");
+
   // Construct citation style options HTML
-  const citationStyle =
-    PropertiesService.getDocumentProperties().getProperty("citationStyle");
-  var stylesHTML = "";
-  for (var i = 0; i < stylesObj.length; i++) {
-    stylesHTML += `<option value="${stylesObj[i].name}"`;
-    if (stylesObj[i].name == citationStyle) {
-      stylesHTML += ` selected`;
-    }
-    stylesHTML += `>${stylesObj[i].title}</option>`;
-  }
+  var stylesHTML = stylesObj
+    .map(
+      (style: { name: string; title: string }) =>
+        `<option value="${style.name}"${
+          style.name == citationStyle ? " selected" : ""
+        }>${style.title}</option>`
+    )
+    .join(""); // TODO: Make it clearereerer
+
+  // Choose group menu
+  var groups = getGroups();
+  var groupsHTML = `<option value="">None</option>`;
+  groupsHTML += groups
+    .map(
+      (group: { id: string; name: string }) =>
+        `<option value="${group.id}"${group.id == groupID ? " selected" : ""}>
+        ${group.name}</option>`
+    )
+    .join(""); // TODO: Make it clearereerer
 
   var template = HtmlService.createTemplateFromFile("templates/setting.html");
   template.stylesHTML = stylesHTML;
+  template.groupsHTML = groupsHTML;
   var page = template.evaluate();
   page.setTitle("Bibs for Mendeley Setting");
   DocumentApp.getUi().showSidebar(page);
 }
 
-function saveSetting(citationStyle: string) {
+function saveSetting(citationStyle: string, groupID: string) {
   const ui = DocumentApp.getUi();
   const documentProperties = PropertiesService.getDocumentProperties();
-  documentProperties.setProperty("citationStyle", citationStyle);
 
-  // Refresh bibliography
-  insertBibliography(false);
+  if (citationStyle != documentProperties.getProperty("citationStyle")) {
+    documentProperties.setProperty("citationStyle", citationStyle);
+    insertBibliography(false); // Refresh bibliography
+  }
+  documentProperties.setProperty("groupID", groupID);
 
   ui.alert("Setting saved");
 }
 
 function openLibrary() {
+  const documentProperties = PropertiesService.getDocumentProperties();
+  const groupID = documentProperties.getProperty("groupID");
+
   var service = getService_();
   var response = UrlFetchApp.fetch(
-    "https://api.mendeley.com/folders?maxResults=10",
+    `https://api.mendeley.com/folders?maxResults=50&group_id=${groupID}`,
     {
       headers: {
         Authorization: "Bearer " + service.getAccessToken(),
@@ -96,6 +115,9 @@ function openLibrary() {
 // Fetch documents to be showed in libraries sidebar
 // See templates/libraries.html
 function getDocuments(folder_id: string) {
+  const documentProperties = PropertiesService.getDocumentProperties();
+  const groupID = documentProperties.getProperty("groupID");
+
   var cache = CacheService.getDocumentCache();
   if (!cache) {
     DocumentApp.getUi().alert(
@@ -104,11 +126,11 @@ function getDocuments(folder_id: string) {
     throw new Error("Failed to get cache");
   }
 
-  var documents = cache.get(`documents-${folder_id}`);
+  var documents = cache.get(`documents-${folder_id}-${groupID}`);
   if (!documents) {
     var service = getService_();
     var response = UrlFetchApp.fetch(
-      `https://api.mendeley.com/documents?folder_id=${folder_id}`,
+      `https://api.mendeley.com/documents?folder_id=${folder_id}&group_id=${groupID}`,
       {
         headers: {
           Authorization: "Bearer " + service.getAccessToken(),
@@ -116,7 +138,7 @@ function getDocuments(folder_id: string) {
       }
     );
     documents = response.getContentText();
-    cache.put(`documents-${folder_id}`, documents);
+    cache.put(`documents-${folder_id}-${groupID}`, documents);
   }
   return JSON.parse(documents);
 }
@@ -149,6 +171,17 @@ function getDocumentBibtex(document_id: string): string {
   bibtex = response.getContentText();
   cache.put(`bibtex-${document_id}`, bibtex);
   return bibtex;
+}
+
+function getGroups() {
+  var service = getService_();
+  var response = UrlFetchApp.fetch(`https://api.mendeley.com/groups/v2`, {
+    headers: {
+      Authorization: "Bearer " + service.getAccessToken(),
+    },
+  });
+  var documents = response.getContentText();
+  return JSON.parse(documents);
 }
 
 function doCite(documentIDs: string[]) {
