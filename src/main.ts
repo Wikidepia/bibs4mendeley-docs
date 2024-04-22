@@ -90,8 +90,6 @@ function saveSetting(citationStyle: string, groupID: string) {
     insertBibliography(false); // Refresh bibliography
   }
   documentProperties.setProperty("groupID", groupID);
-
-  ui.alert("Setting saved");
 }
 
 function openLibrary() {

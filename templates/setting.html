@@ -26,7 +26,10 @@
 
         google.script.run
           .withSuccessHandler(function () {
-            button.innerText = "Save";
+            button.innerText = "Settings saved!";
+            setTimeout(() => {
+              button.innerText = "Save";
+            }, 3000);
             button.disabled = false;
             button.className = "blue";
           })
@@ -120,8 +123,10 @@
       document.addEventListener("DOMContentLoaded", (event) => {
         const choices = new Choices(element, {
           searchEnabled: true,
+          shouldSort: false,
           itemSelectText: "",
           searchResultLimit: 20,
+          renderChoiceLimit: 5,
         });
       });
     </script>
