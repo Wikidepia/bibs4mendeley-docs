@@ -14,6 +14,15 @@ function onOpen(e: GoogleAppsScript.Events.DocsOnOpen) {
     .addItem("Open Library", "openLibrary")
     .addItem("Insert Bibliography", "insertBibliography")
     .addToUi();
+
+  // Set default properties
+  const documentProperties = PropertiesService.getDocumentProperties();
+  if (!documentProperties.getProperty("citationStyle")) {
+    documentProperties.setProperty("citationStyle", "apa");
+  }
+  if (!documentProperties.getProperty("groupID")) {
+    documentProperties.setProperty("groupID", "");
+  }
 }
 
 function mendeleyLogin() {
@@ -36,7 +45,9 @@ function mendeleyLogout() {
   service.reset();
 
   // Close sidebar (https://stackoverflow.com/a/63844458)
-  var closeSidebar = HtmlService.createHtmlOutput("<script>google.script.host.close();</script>");
+  var closeSidebar = HtmlService.createHtmlOutput(
+    "<script>google.script.host.close();</script>"
+  );
   DocumentApp.getUi().showSidebar(closeSidebar);
   DocumentApp.getUi().alert("Disconnected Mendeley");
 }
