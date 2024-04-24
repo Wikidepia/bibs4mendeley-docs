@@ -5,6 +5,10 @@ function escapeRegex(str: string) {
   return str.replace(/[/\-\\^$*+?.()|[\]{}]/g, "\\$&");
 }
 
+function onInstall(e: GoogleAppsScript.Events.DocsOnOpen) {
+  onOpen(e);
+}
+
 function onOpen(e: GoogleAppsScript.Events.DocsOnOpen) {
   var ui = DocumentApp.getUi();
   ui.createMenu("Bibs for Mendeley")
