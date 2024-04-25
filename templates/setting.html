@@ -20,7 +20,7 @@
         const citationStyleSelect = document.getElementById("citation-style");
         const citationStyle =
           citationStyleSelect.options[citationStyleSelect.selectedIndex].value;
-        
+
         const groupSelect = document.getElementById("shared-groups");
         const groupID = groupSelect.options[groupSelect.selectedIndex].value;
 
@@ -36,8 +36,6 @@
           .saveSetting(citationStyle, groupID);
       }
     </script>
-  </head>
-  <body>
     <style>
       .branding-below {
         bottom: 56px;
@@ -77,13 +75,46 @@
       .tabs > li > :first-child {
         margin-left: 10px;
       }
-    </style>
+      .loader {
+        width: 16px;
+        height: 16px;
+        border: 3px solid #fff;
+        border-radius: 50%;
+        display: inline-block;
+        position: relative;
+        box-sizing: border-box;
+        animation: rotation 1s linear infinite;
+      }
+      .loader::after {
+        content: "";
+        box-sizing: border-box;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 3px solid transparent;
+        border-bottom-color: #4a8bf6;
+      }
 
+      @keyframes rotation {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
     <div class="sidebar branding-below">
       <div class="block form-group">
         <ul class="tabs">
           <li
-            onclick="document.body.innerHTML = 'Loading...'; google.script.run.openLibrary();"
+            onclick="this.innerHTML = '<span class=\'loader\'></span>'; google.script.run.openLibrary();"
           >
             Libraries
           </li>
@@ -96,10 +127,13 @@
         </select>
 
         <label>Choose shared groups:</label>
-        <select id="shared-groups" style="width: 100%; max-width: 100%;">
+        <select id="shared-groups" style="width: 100%; max-width: 100%">
           <?!= groupsHTML ?>
         </select>
-        <small class="gray">Changing this affects other users who use the document. You can choose "None" to use your own library.</small>
+        <small class="gray"
+          >Changing this affects other users who use the document. You can
+          choose "None" to use your own library.</small
+        >
       </div>
 
       <div class="block form-group">
