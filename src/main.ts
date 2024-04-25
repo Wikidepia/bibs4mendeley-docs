@@ -9,7 +9,7 @@ function onInstall(e: GoogleAppsScript.Events.DocsOnOpen) {
   onOpen(e);
 }
 
-function onOpen(e: GoogleAppsScript.Events.DocsOnOpen) {
+function onOpen(_e: GoogleAppsScript.Events.DocsOnOpen) {
   var ui = DocumentApp.getUi();
   ui.createMenu("Bibs for Mendeley")
     .addItem("Connect Mendeley", "mendeleyLogin")
@@ -38,7 +38,7 @@ function mendeleyLogin() {
 
   var authorizationUrl = service.getAuthorizationUrl();
   var template = HtmlService.createTemplateFromFile("templates/login.html");
-  template.authorizationUrl = authorizationUrl;
+  template["authorizationUrl"] = authorizationUrl;
   var page = template.evaluate();
   page.setTitle("Bibs for Mendeley Authorization");
   DocumentApp.getUi().showSidebar(page);
@@ -89,15 +89,14 @@ function mendeleySetting() {
     .join(""); // TODO: Make it clearereerer
 
   var template = HtmlService.createTemplateFromFile("templates/setting.html");
-  template.stylesHTML = stylesHTML;
-  template.groupsHTML = groupsHTML;
+  template["stylesHTML"] = stylesHTML;
+  template["groupsHTML"] = groupsHTML;
   var page = template.evaluate();
   page.setTitle("Bibs for Mendeley Setting");
   DocumentApp.getUi().showSidebar(page);
 }
 
 function saveSetting(citationStyle: string, groupID: string) {
-  const ui = DocumentApp.getUi();
   const documentProperties = PropertiesService.getDocumentProperties();
 
   if (citationStyle != documentProperties.getProperty("citationStyle")) {
@@ -123,7 +122,7 @@ function openLibrary() {
   var folders = JSON.parse(response.getContentText());
 
   var template = HtmlService.createTemplateFromFile("templates/libraries.html");
-  template.folders = folders;
+  template["folders"] = folders;
   var page = template.evaluate();
   page.setTitle("Bibs for Mendeley Libraries");
   DocumentApp.getUi().showSidebar(page);
@@ -219,6 +218,7 @@ function insertCitation(citation: string, documentIDs: string[]) {
 }
 
 function insertBibliography(createNew: boolean = true) {
+  var ui = DocumentApp.getUi();
   var baseDoc = DocumentApp.getActiveDocument();
   var body = baseDoc.getBody();
 
@@ -232,21 +232,29 @@ function insertBibliography(createNew: boolean = true) {
     markerLinks.push(link);
     if (link && link.includes("#cite-mendeley")) {
       var bibtexIDLink = [];
-      var documentIDs = link
-        .split("#cite-mendeley+")[1]
-        .split("+")[0]
-        .split("|");
+      var documentIDs =
+        link.split("#cite-mendeley+")?.[1]?.split("+")?.[0]?.split("|") || [];
+
+      if (documentIDs.length == 0) {
+        ui.alert("Failed to parse document IDs");
+        return;
+      }
+
       for (var i = 0; i < documentIDs.length; i++) {
-        var bibtex = getDocumentBibtex(documentIDs[i]);
+        var documentID = documentIDs[i] || "";
+        if (documentID.length == 0) {
+          continue;
+        }
+        var bibtex = getDocumentBibtex(documentID);
         if (bibtex.length == 0) {
-          DocumentApp.getUi().alert(
-            "Failed to fetch bibtex for document ID: " + documentIDs[i]
+          ui.alert(
+            "Failed to fetch bibtex for document ID: " + documentID
           );
           return;
         }
-        var bibtexID = bibtex.split("\n")[0].split("{")[1].split(",")[0];
-        bibtexIDLink.push(bibtexID);
-        if (!cites.includes(documentIDs[i])) cites.push(documentIDs[i]);
+        var bibtexID = bibtex.split("\n")?.[0]?.split("{")?.[1]?.split(",")[0];
+        bibtexIDLink.push(bibtexID || "");
+        if (!cites.includes(documentID)) cites.push(documentID);
       }
       bibtexIDs.push(bibtexIDLink);
     }
@@ -254,12 +262,13 @@ function insertBibliography(createNew: boolean = true) {
   }
 
   // Check if table already exists
-  var tables = body.getTables();
-  var table = null as GoogleAppsScript.Document.Table | null;
-  for (var i = 0; i < tables.length; i++) {
-    var tableText = tables[i].getCell(0, 0).editAsText().getLinkUrl(0) || "";
+  var allTables = body.getTables();
+  var table = undefined as GoogleAppsScript.Document.Table | undefined;
+  for (var i = 0; i < allTables.length; i++) {
+    var tableText =
+      allTables[i]?.getCell(0, 0).editAsText().getLinkUrl(0) || "";
     if (tableText.includes("#bibs-mendeley")) {
-      table = tables[i];
+      table = allTables[i];
       break;
     }
   }
@@ -316,21 +325,27 @@ function insertBibliography(createNew: boolean = true) {
     const oldMarkerOffset = citesSearch.getStartOffset();
     var element = citesSearch.getElement();
     var afterSearchLink = element.asText().getLinkUrl(oldMarkerOffset);
-    var link = markerLinks[searchCnt];
+    var markerLink = markerLinks[searchCnt];
 
     // Skip if link is different, which means
     // it is already updated
-    if (afterSearchLink != link) {
+    if (afterSearchLink != markerLink) {
       citesSearch = body.findText(`​`, citesSearch);
       continue;
     }
     searchCnt++;
 
-    if (link && link.includes("#cite-mendeley")) {
+    if (markerLink && markerLink.includes("#cite-mendeley")) {
       const citation = citationJSResult["citations"][citeCnt];
-      const curCiteLength = parseInt(link.split("+")[2]);
-      const ciText = element.asText();
+      const curCiteLength = parseInt(markerLink?.split("+")?.[2] || "0");
+      if (citation.length == 0 || curCiteLength == 0) {
+        DocumentApp.getUi().alert(
+          "Failed to fetch citation for document ID: " + cites[searchCnt]
+        );
+        return;
+      }
 
+      const ciText = element.asText();
       // Replace old citation with new citation
       ciText.deleteText(oldMarkerOffset - curCiteLength, oldMarkerOffset);
       ciText.insertText(oldMarkerOffset - curCiteLength, citation + `​`);
@@ -340,7 +355,9 @@ function insertBibliography(createNew: boolean = true) {
       ciText.setLinkUrl(
         newMarkerOffset,
         newMarkerOffset,
-        link.split("+").slice(0, 2).join("+") + "+" + citation.length.toString()
+        markerLink.split("+").slice(0, 2).join("+") +
+          "+" +
+          citation.length.toString()
       );
       citeCnt++;
     }
