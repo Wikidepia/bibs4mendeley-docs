@@ -108,7 +108,10 @@ function saveSetting(citationStyle: string, groupID: string) {
 
 function openLibrary() {
   const documentProperties = PropertiesService.getDocumentProperties();
-  const groupID = documentProperties.getProperty("groupID");
+  var groupID = documentProperties.getProperty("groupID");
+  if (!groupID) {
+    groupID = "";
+  }
 
   var service = getService_();
   var response = UrlFetchApp.fetch(
