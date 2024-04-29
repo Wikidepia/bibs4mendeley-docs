@@ -124,12 +124,19 @@ function openLibrary() {
     }
   );
 
-  if (response.getResponseCode() === 404) {
+  var responseCode = response.getResponseCode();
+  if (responseCode === 404) {
     documentProperties.setProperty("groupID", "");
+    DocumentApp.getUi().alert("Group not found, and has been set to None.");
+    openLibrary();
+    return;
+  } else if (responseCode === 401) {
     DocumentApp.getUi().alert(
-      "Group not found, and has been set to None."
+      "You are not connected to Mendeley. Please try to connect again."
     );
-    return openLibrary();
+    mendeleyLogout();
+    mendeleyLogin();
+    return;
   }
 
   var folders = JSON.parse(response.getContentText());
