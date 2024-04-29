@@ -134,7 +134,7 @@ function openLibrary() {
     DocumentApp.getUi().alert(
       "You are not connected to Mendeley. Please try to connect again."
     );
-    mendeleyLogout();
+    getService_().reset();
     mendeleyLogin();
     return;
   }
@@ -168,7 +168,6 @@ function getDocuments(folder_id: string) {
 
 function getDocumentBibtex(document_id: string): string {
   var documentProperties = PropertiesService.getDocumentProperties();
-
   var bibtex = documentProperties.getProperty(`bibtex-${document_id}`);
   if (bibtex) {
     return bibtex;
@@ -183,8 +182,23 @@ function getDocumentBibtex(document_id: string): string {
         Authorization: "Bearer " + service.getAccessToken(),
       },
       contentType: "application/x-bibtex",
+      muteHttpExceptions: true,
     }
   );
+
+  var responseCode = response.getResponseCode();
+  if (responseCode === 404) {
+    return "";
+  } else if (responseCode === 401) {
+    DocumentApp.getUi().alert(
+      "You are not connected to Mendeley. Please try to connect again."
+    );
+    getService_().reset();
+    mendeleyLogin();
+    // Raise exception to stop further execution
+    throw new Error("Not connected to Mendeley");
+  }
+
   bibtex = response.getContentText();
   documentProperties.setProperty(`bibtex-${document_id}`, bibtex);
   return bibtex;
@@ -202,20 +216,36 @@ function getGroups() {
 }
 
 function doCite(documentIDs: string[]) {
-  // Insert temp citation
-  insertCitation("(BibliographyIsNotInserted)", documentIDs);
+  var ui = DocumentApp.getUi();
+  var tempText = insertCitation("(BibliographyIsNotInserted)", documentIDs);
 
-  // Insert bibliography
-  insertBibliography(false);
+  try {
+    insertBibliography(false);
+  } catch (e) {
+    var cursor = DocumentApp.getActiveDocument().getCursor();
+    if (cursor) {
+      cursor
+        .getElement()
+        .asText()
+        .deleteText(
+          cursor.getSurroundingTextOffset(),
+          cursor.getSurroundingTextOffset() + tempText.getText().length - 1
+        ); // Remove temp text
+    }
+    ui.alert("Failed to insert bibliography");
+  }
 }
 
 // From: https://stackoverflow.com/a/59711275
-function insertCitation(citation: string, documentIDs: string[]) {
+function insertCitation(
+  citation: string,
+  documentIDs: string[]
+): GoogleAppsScript.Document.Text {
   var baseDoc = DocumentApp.getActiveDocument();
 
   var cursor = baseDoc.getCursor();
   if (!cursor) {
-    return;
+    throw new Error("Cursor not found");
   }
 
   // Append text to after the cursor
@@ -234,6 +264,7 @@ function insertCitation(citation: string, documentIDs: string[]) {
     text.getText().length - 1,
     `#cite-mendeley+${documentIDs.join("|")}+${citation.length}`
   );
+  return text.copy();
 }
 
 function insertBibliography(createNew: boolean = true) {
@@ -267,7 +298,9 @@ function insertBibliography(createNew: boolean = true) {
         var bibtex = getDocumentBibtex(documentID);
         if (bibtex.length == 0) {
           ui.alert("Failed to fetch bibtex for document ID: " + documentID);
-          return;
+          throw new Error(
+            "Failed to fetch bibtex for document ID: " + documentID
+          );
         }
         var bibtexID = bibtex.split("\n")?.[0]?.split("{")?.[1]?.split(",")[0];
         bibtexIDLink.push(bibtexID || "");
