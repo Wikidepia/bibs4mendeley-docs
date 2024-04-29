@@ -151,7 +151,10 @@ function openLibrary() {
 // See templates/libraries.html
 function getDocuments(folder_id: string) {
   const documentProperties = PropertiesService.getDocumentProperties();
-  const groupID = documentProperties.getProperty("groupID");
+  var groupID = documentProperties.getProperty("groupID");
+  if (!groupID) {
+    groupID = "";
+  }
 
   var service = getService_();
   var response = UrlFetchApp.fetch(
@@ -160,8 +163,23 @@ function getDocuments(folder_id: string) {
       headers: {
         Authorization: "Bearer " + service.getAccessToken(),
       },
+      muteHttpExceptions: true,
     }
   );
+
+  var responseCode = response.getResponseCode();
+  if (responseCode === 404) {
+    DocumentApp.getUi().alert("Folder or group not found, try refreshing the library.");
+    throw new Error("Folder or group not found");
+  } else if (responseCode === 401) {
+    DocumentApp.getUi().alert(
+      "You are not connected to Mendeley. Please try to connect again."
+    );
+    getService_().reset();
+    mendeleyLogin();
+    throw new Error("Not connected to Mendeley");
+  }
+
   const documents = response.getContentText();
   return JSON.parse(documents);
 }
