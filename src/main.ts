@@ -120,10 +120,19 @@ function openLibrary() {
       headers: {
         Authorization: "Bearer " + service.getAccessToken(),
       },
+      muteHttpExceptions: true,
     }
   );
-  var folders = JSON.parse(response.getContentText());
 
+  if (response.getResponseCode() === 404) {
+    documentProperties.setProperty("groupID", "");
+    DocumentApp.getUi().alert(
+      "Group not found, and has been set to None."
+    );
+    return openLibrary();
+  }
+
+  var folders = JSON.parse(response.getContentText());
   var template = HtmlService.createTemplateFromFile("templates/libraries.html");
   template["folders"] = folders;
   var page = template.evaluate();
@@ -250,9 +259,7 @@ function insertBibliography(createNew: boolean = true) {
         }
         var bibtex = getDocumentBibtex(documentID);
         if (bibtex.length == 0) {
-          ui.alert(
-            "Failed to fetch bibtex for document ID: " + documentID
-          );
+          ui.alert("Failed to fetch bibtex for document ID: " + documentID);
           return;
         }
         var bibtexID = bibtex.split("\n")?.[0]?.split("{")?.[1]?.split(",")[0];
