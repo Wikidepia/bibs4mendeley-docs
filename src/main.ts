@@ -69,24 +69,21 @@ function mendeleySetting() {
 
   // Construct citation style options HTML
   var stylesHTML = stylesObj
-    .map(
-      (style: { name: string; title: string }) =>
-        `<option value="${style.name}"${
-          style.name == citationStyle ? " selected" : ""
-        }>${style.title}</option>`
-    )
-    .join(""); // TODO: Make it clearereerer
+    .map((style: { name: string; title: string }) => {
+      var isSelected = style.name == citationStyle ? " selected" : "";
+      return `<option value="${style.name}"${isSelected}>${style.title}</option>`;
+    })
+    .join("");
 
   // Choose group menu
   var groups = getGroups();
-  var groupsHTML = `<option value="">None</option>`;
-  groupsHTML += groups
-    .map(
-      (group: { id: string; name: string }) =>
-        `<option value="${group.id}"${group.id == groupID ? " selected" : ""}>
-        ${group.name}</option>`
-    )
-    .join(""); // TODO: Make it clearereerer
+  var defaultOption = `<option value="">None</option>`;
+
+  var groupOptions = groups.map((group: { id: string; name: string }) => {
+    var isSelected = group.id == groupID ? " selected" : "";
+    return `<option value="${group.id}"${isSelected}>${group.name}</option>`;
+  });
+  var groupsHTML = defaultOption + groupOptions.join("");
 
   var template = HtmlService.createTemplateFromFile("templates/setting.html");
   template["stylesHTML"] = stylesHTML;
@@ -169,7 +166,9 @@ function getDocuments(folder_id: string) {
 
   var responseCode = response.getResponseCode();
   if (responseCode === 404) {
-    DocumentApp.getUi().alert("Folder or group not found, try refreshing the library.");
+    DocumentApp.getUi().alert(
+      "Folder or group not found, try refreshing the library."
+    );
     throw new Error("Folder or group not found");
   } else if (responseCode === 401) {
     DocumentApp.getUi().alert(
