@@ -9,9 +9,15 @@ function onInstall(e: GoogleAppsScript.Events.DocsOnOpen) {
   onOpen(e);
 }
 
-function onOpen(_e: GoogleAppsScript.Events.DocsOnOpen) {
+function onOpen(e: GoogleAppsScript.Events.DocsOnOpen) {
   var ui = DocumentApp.getUi();
-  ui.createMenu("Bibs for Mendeley")
+  var menu = ui.createMenu("Bibs for Mendeley");
+  if (e && e.authMode == ScriptApp.AuthMode.NONE) {
+    menu.addItem("Start add-ons", "openUnauthorizedSidebar").addToUi();
+    return;
+  }
+
+  menu
     .addItem("Connect Mendeley", "mendeleyLogin")
     .addItem("Disconnect Mendeley", "mendeleyLogout")
     .addSeparator()
@@ -27,6 +33,21 @@ function onOpen(_e: GoogleAppsScript.Events.DocsOnOpen) {
   if (!documentProperties.getProperty("groupID")) {
     documentProperties.setProperty("groupID", "");
   }
+}
+
+function openUnauthorizedSidebar() {
+  var alertSidebar = HtmlService.createHtmlOutput(
+    `Please allow the Add-ons to run. If you already see this message, please refresh the page.
+    <br><br>
+    If you still see this message after refreshing the page, please enable these add-ons for this document. You can follow the following instructions:
+    <ol>
+    <li>On your computer, open a document, spreadsheet, or presentation.</li>
+    <li>Click <b>Extensions</b> and then <b>Add-ons</b> and then <b>Manage add-ons</b>.</li>
+    <li>To turn the add-on on or off, next to the add-on, click <b>Options</b> (three bullet) and then <b>Use in this document</b>.</li>
+    </ol>`
+  );
+  alertSidebar.setTitle("Bibs for Mendeley Unauthorized");
+  DocumentApp.getUi().showSidebar(alertSidebar);
 }
 
 function mendeleyLogin() {
