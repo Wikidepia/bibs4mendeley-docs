@@ -30,13 +30,15 @@ function onOpen(_e: GoogleAppsScript.Events.DocsOnOpen) {
 }
 
 function mendeleyLogin() {
-  var service = getService_();
-  // Check if already authorized
-  if (service.hasAccess()) {
-    return openLibrary();
-  }
+  // Create authorizationURL
+  let authorizationUrl = "https://api.mendeley.com/oauth/authorize";
+  authorizationUrl += "?response_type=code";
+  authorizationUrl += "&client_id=" + "18291";
+  authorizationUrl +=
+    "&redirect_uri=" + encodeURIComponent("https://bibs4mendeley.pages.dev");
+  authorizationUrl += "&scope=all";
+  authorizationUrl += "&state=" + "1234567890";
 
-  var authorizationUrl = service.getAuthorizationUrl();
   var template = HtmlService.createTemplateFromFile("templates/login.html");
   template["authorizationUrl"] = authorizationUrl;
   var page = template.evaluate();
@@ -45,8 +47,7 @@ function mendeleyLogin() {
 }
 
 function mendeleyLogout() {
-  var service = getService_();
-  service.reset();
+  resetAccessToken();
 
   // Close sidebar (https://stackoverflow.com/a/63844458)
   var closeSidebar = HtmlService.createHtmlOutput(
@@ -110,12 +111,11 @@ function openLibrary() {
     groupID = "";
   }
 
-  var service = getService_();
   var response = UrlFetchApp.fetch(
     `https://api.mendeley.com/folders?maxResults=50&group_id=${groupID}`,
     {
       headers: {
-        Authorization: "Bearer " + service.getAccessToken(),
+        Authorization: "Bearer " + getAccessToken(),
       },
       muteHttpExceptions: true,
     }
@@ -131,7 +131,6 @@ function openLibrary() {
     DocumentApp.getUi().alert(
       "You are not connected to Mendeley. Please try to connect again."
     );
-    getService_().reset();
     mendeleyLogin();
     return;
   }
@@ -153,12 +152,11 @@ function getDocuments(folder_id: string) {
     groupID = "";
   }
 
-  var service = getService_();
   var response = UrlFetchApp.fetch(
     `https://api.mendeley.com/documents?folder_id=${folder_id}&group_id=${groupID}`,
     {
       headers: {
-        Authorization: "Bearer " + service.getAccessToken(),
+        Authorization: "Bearer " + getAccessToken(),
       },
       muteHttpExceptions: true,
     }
@@ -174,7 +172,6 @@ function getDocuments(folder_id: string) {
     DocumentApp.getUi().alert(
       "You are not connected to Mendeley. Please try to connect again."
     );
-    getService_().reset();
     mendeleyLogin();
     throw new Error("Not connected to Mendeley");
   }
@@ -190,13 +187,12 @@ function getDocumentBibtex(document_id: string): string {
     return bibtex;
   }
 
-  var service = getService_();
   var response = UrlFetchApp.fetch(
     `https://api.mendeley.com/documents/${document_id}`,
     {
       headers: {
         Accept: "application/x-bibtex",
-        Authorization: "Bearer " + service.getAccessToken(),
+        Authorization: "Bearer " + getAccessToken(),
       },
       contentType: "application/x-bibtex",
       muteHttpExceptions: true,
@@ -210,7 +206,6 @@ function getDocumentBibtex(document_id: string): string {
     DocumentApp.getUi().alert(
       "You are not connected to Mendeley. Please try to connect again."
     );
-    getService_().reset();
     mendeleyLogin();
     // Raise exception to stop further execution
     throw new Error("Not connected to Mendeley");
@@ -222,10 +217,9 @@ function getDocumentBibtex(document_id: string): string {
 }
 
 function getGroups() {
-  var service = getService_();
   var response = UrlFetchApp.fetch(`https://api.mendeley.com/groups/v2`, {
     headers: {
-      Authorization: "Bearer " + service.getAccessToken(),
+      Authorization: "Bearer " + getAccessToken(),
     },
     muteHttpExceptions: true,
   });
@@ -235,7 +229,6 @@ function getGroups() {
     DocumentApp.getUi().alert(
       "You are not connected to Mendeley. Please try to connect again."
     );
-    getService_().reset();
     mendeleyLogin();
     throw new Error("Not connected to Mendeley");
   }
