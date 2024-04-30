@@ -228,7 +228,19 @@ function getGroups() {
     headers: {
       Authorization: "Bearer " + service.getAccessToken(),
     },
+    muteHttpExceptions: true,
   });
+
+  var responseCode = response.getResponseCode();
+  if (responseCode === 401) {
+    DocumentApp.getUi().alert(
+      "You are not connected to Mendeley. Please try to connect again."
+    );
+    getService_().reset();
+    mendeleyLogin();
+    throw new Error("Not connected to Mendeley");
+  }
+
   var documents = response.getContentText();
   return JSON.parse(documents);
 }
