@@ -8,11 +8,23 @@
     />
 
     <script>
-      function saveSetting() {
-        var citationStyle = document.getElementById("citation-style");
-        var citationValue =
-          citationStyle.options[citationStyle.selectedIndex].value;
-        google.script.run.saveSetting(citationValue);
+      function saveCode(button_element) {
+        button_element.innerText = "Saving, please wait...";
+        button_element.disabled = true;
+        button_element.className = "gray";
+
+        const access_code = document.getElementById("code").value;
+
+        google.script.run
+          .withSuccessHandler(function () {
+            button_element.innerText = "Connected successfully!";
+            setTimeout(() => {
+              button.innerText = "Save Code";
+            }, 3000);
+            button_element.disabled = false;
+            button_element.className = "blue";
+          })
+          .initAccessToken(access_code);
       }
     </script>
   </head>
@@ -27,11 +39,41 @@
     <div class="sidebar branding-below">
       <div class="block form-group" style="width: 100%">
         <h2>1. Click the following button to connect your Mendeley account.</h2>
-        <button class="blue" style="width: 100%;" onclick="window.open('<?= authorizationUrl ?>')">Connect Mendeley</button>
-        <hr>
-        <h2>2. After connecting your Mendeley account, click the following button to open your library.</h2>
-        <button class="blue" style="width: 100%;" onclick="google.script.run.openLibrary()">Open Library</button>
-    </div>
+        <button
+          class="blue"
+          style="width: 100%"
+          onclick="window.open('<?= authorizationUrl ?>')"
+        >
+          CONNECT MENDELEY
+        </button>
+        <hr />
+        <h2>
+          2. Paste the code that you receive after connecting your Mendeley
+          account.
+        </h2>
+        <input
+          type="text"
+          style="width: 100%; margin-bottom: 4px"
+          placeholder="Your code here..."
+          id="code"
+          style="width: 100%"
+        />
+        <button class="blue" style="width: 100%" onclick="saveCode(this)">
+          SAVE CODE
+        </button>
+        <hr />
+        <h2>
+          3. After connecting your Mendeley account, click the following button
+          to open your library.
+        </h2>
+        <button
+          class="blue"
+          style="width: 100%"
+          onclick="google.script.run.openLibrary()"
+        >
+          OPEN LIBRARY
+        </button>
+      </div>
     </div>
 
     <div class="sidebar bottom">
