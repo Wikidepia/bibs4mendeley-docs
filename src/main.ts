@@ -259,7 +259,6 @@ function getGroups() {
 }
 
 function doCite(documentIDs: string[]) {
-  var ui = DocumentApp.getUi();
   var tempText = insertCitation("(BibliographyIsNotInserted)", documentIDs);
 
   try {
@@ -275,7 +274,6 @@ function doCite(documentIDs: string[]) {
           cursor.getSurroundingTextOffset() + tempText.getText().length - 1
         ); // Remove temp text
     }
-    ui.alert("Failed to insert bibliography");
   }
 }
 
@@ -284,11 +282,13 @@ function insertCitation(
   citation: string,
   documentIDs: string[]
 ): GoogleAppsScript.Document.Text {
+  var ui = DocumentApp.getUi();
   var baseDoc = DocumentApp.getActiveDocument();
 
   var cursor = baseDoc.getCursor();
   if (!cursor) {
-    throw new Error("Cursor not found");
+    ui.alert("Please place the cursor in the place you want to insert citation.");
+    throw new Error("cursor not found");
   }
 
   // Append text to after the cursor
@@ -370,8 +370,10 @@ function insertBibliography(createNew: boolean = true) {
   if (!table && createNew) {
     var cursor = baseDoc.getCursor();
     if (!cursor) {
-      return;
+      ui.alert("Please place the cursor in the place you want to insert bibliography.");
+      throw new Error("cursor not found");
     }
+
     var cursorPos = baseDoc.getBody().getChildIndex(cursor.getElement());
     table = body.insertTable(cursorPos);
     table.setBorderWidth(0);
