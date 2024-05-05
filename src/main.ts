@@ -254,6 +254,13 @@ function getGroups() {
 }
 
 function doCite(documentIDs: string[]) {
+  var ui = DocumentApp.getUi();
+  if (!isBibliographyExist()) {
+    ui.alert(`You need to insert reference list to your document. Follow these steps:
+        1. Place your cursor on where you want to insert the reference list.
+        2. Go to Extensions -> Bibs for Mendeley -> Insert Bibliography`);
+    return;
+  }
   var tempText = insertCitation("(BibliographyIsNotInserted)", documentIDs);
 
   try {
@@ -377,7 +384,9 @@ function insertBibliography(createNew: boolean = true) {
       var cursorChild = baseDoc.getBody().getChildIndex(cursor.getElement());
     } catch (e) {
       ui.alert("Cannot insert bibliography here, please try on another place.");
-      throw new Error("failed to insert bibliography, element does not like table");
+      throw new Error(
+        "failed to insert bibliography, element does not like table"
+      );
     }
 
     table = body.insertTable(cursorChild);
@@ -465,4 +474,17 @@ function insertBibliography(createNew: boolean = true) {
     }
     citesSearch = body.findText(`​`, citesSearch);
   }
+}
+
+function isBibliographyExist(): boolean {
+  var body = DocumentApp.getActiveDocument().getBody();
+  var allTables = body.getTables();
+  for (var i = 0; i < allTables.length; i++) {
+    var tableText =
+      allTables[i]?.getCell(0, 0).editAsText().getLinkUrl(0) || "";
+    if (tableText.includes("#bibs-mendeley")) {
+      return true;
+    }
+  }
+  return false;
 }
