@@ -327,7 +327,7 @@ function insertBibliography(createNew: boolean = true) {
 
       if (documentIDs.length == 0) {
         ui.alert("Failed to parse document IDs");
-        return;
+        throw new Error("failed to parse document IDs");
       }
 
       for (var i = 0; i < documentIDs.length; i++) {
@@ -339,7 +339,7 @@ function insertBibliography(createNew: boolean = true) {
         if (bibtex.length == 0) {
           ui.alert("Failed to fetch bibtex for document ID: " + documentID);
           throw new Error(
-            "Failed to fetch bibtex for document ID: " + documentID
+            "failed to fetch bibtex for document ID: " + documentID
           );
         }
         var bibtexID = bibtex.split("\n")?.[0]?.split("{")?.[1]?.split(",")[0];
@@ -434,9 +434,11 @@ function insertBibliography(createNew: boolean = true) {
       const curCiteLength = parseInt(markerLink?.split("+")?.[2] || "0");
       if (citation.length == 0 || curCiteLength == 0) {
         DocumentApp.getUi().alert(
-          "Failed to fetch citation for document ID: " + cites[searchCnt]
+          "failed to fetch citation for document ID: " + cites[searchCnt]
         );
-        return;
+        throw new Error(
+          "failed to fetch citation for document ID: " + cites[searchCnt]
+        );
       }
 
       const ciText = element.asText();
