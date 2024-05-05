@@ -373,8 +373,14 @@ function insertBibliography(createNew: boolean = true) {
       throw new Error("cursor not found");
     }
 
-    var cursorPos = baseDoc.getBody().getChildIndex(cursor.getElement());
-    table = body.insertTable(cursorPos);
+    try {
+      var cursorChild = baseDoc.getBody().getChildIndex(cursor.getElement());
+    } catch (e) {
+      ui.alert("Cannot insert bibliography here, please try on another place.");
+      throw new Error("failed to insert bibliography, element does not like table");
+    }
+
+    table = body.insertTable(cursorChild);
     table.setBorderWidth(0);
   } else if (!table) {
     return;
