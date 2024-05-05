@@ -30,6 +30,7 @@ function refreshToken(): string {
 }
 
 function initAccessToken(code: string) {
+  var ui = DocumentApp.getUi();
   var userProperties = PropertiesService.getUserProperties();
   userProperties.setProperty("OAUTH2_CODE", code);
 
@@ -50,9 +51,19 @@ function initAccessToken(code: string) {
       code: code,
       redirect_uri: "https://bibs4mendeley.pages.dev",
     },
+    muteHttpExceptions: true,
   });
 
   var json = JSON.parse(response.getContentText());
+  if (response.getResponseCode() !== 200) {
+    ui.alert(
+      "Failed to generate access token! Please refresh the document, and try to connect again."
+    );
+    throw new Error(
+      "failed to generate access token. err: " + json.error_description
+    );
+  }
+
   var current_time = Math.floor(Date.now() / 1000);
   var expires_time = current_time + json.expires_in - 30;
   userProperties.setProperty("ACCESS_TOKEN", json.access_token);
