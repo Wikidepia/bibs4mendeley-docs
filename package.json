@@ -3,8 +3,5 @@
     "@google/clasp": "^2.4.2",
     "@types/google-apps-script": "^1.0.82",
     "citation-js": "^0.7.10"
-  },
-  "devDependencies": {
-    "@types/google-apps-script-oauth2": "^38.0.4"
   }
 }
