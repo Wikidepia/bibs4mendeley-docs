@@ -320,7 +320,7 @@ function insertBibliography(createNew: boolean = true) {
   var body = baseDoc.getBody();
 
   var markerLinks = [] as string[];
-  var bibtexIDs = [];
+  var bibtexIDs = [] as string[][];
   var cites = [] as string[];
   var citesSearch = body.findText(`​`);
   while (citesSearch != null) {
@@ -328,7 +328,7 @@ function insertBibliography(createNew: boolean = true) {
     var link = element.asText().getLinkUrl(citesSearch.getStartOffset());
     markerLinks.push(link);
     if (link && link.includes("#cite-mendeley")) {
-      var bibtexIDLink = [];
+      var bibtexIDLink = [] as string[];
       var documentIDs =
         link.split("#cite-mendeley+")?.[1]?.split("+")?.[0]?.split("|") || [];
 
@@ -359,16 +359,7 @@ function insertBibliography(createNew: boolean = true) {
   }
 
   // Check if table already exists
-  var allTables = body.getTables();
-  var table = undefined as GoogleAppsScript.Document.Table | undefined;
-  for (var i = 0; i < allTables.length; i++) {
-    var tableText =
-      allTables[i]?.getCell(0, 0).editAsText().getLinkUrl(0) || "";
-    if (tableText.includes("#bibs-mendeley")) {
-      table = allTables[i];
-      break;
-    }
-  }
+  var table = isBibliographyExist();
 
   // Create new table if clicked from menu bar
   if (!table && createNew) {
@@ -476,14 +467,18 @@ function insertBibliography(createNew: boolean = true) {
   }
 }
 
-function isBibliographyExist(): boolean {
+function isBibliographyExist(): GoogleAppsScript.Document.Table | false {
   var body = DocumentApp.getActiveDocument().getBody();
   var allTables = body.getTables();
   for (var i = 0; i < allTables.length; i++) {
-    var tableText =
-      allTables[i]?.getCell(0, 0).editAsText().getLinkUrl(0) || "";
+    var table = allTables[i];
+    try {
+      var tableText = table.getCell(0, 0).editAsText().getLinkUrl(0) || "";
+    } catch (e) {
+      continue;
+    }
     if (tableText.includes("#bibs-mendeley")) {
-      return true;
+      return table;
     }
   }
   return false;
