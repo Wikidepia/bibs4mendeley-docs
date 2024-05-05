@@ -1,10 +1,5 @@
 "use strict";
 
-// https://stackoverflow.com/a/3561711
-function escapeRegex(str: string) {
-  return str.replace(/[/\-\\^$*+?.()|[\]{}]/g, "\\$&");
-}
-
 function onInstall(e: GoogleAppsScript.Events.DocsOnOpen) {
   onOpen(e);
 }
@@ -287,7 +282,9 @@ function insertCitation(
 
   var cursor = baseDoc.getCursor();
   if (!cursor) {
-    ui.alert("Please place the cursor in the place you want to insert citation.");
+    ui.alert(
+      "Please place the cursor in the place you want to insert citation."
+    );
     throw new Error("cursor not found");
   }
 
@@ -370,7 +367,9 @@ function insertBibliography(createNew: boolean = true) {
   if (!table && createNew) {
     var cursor = baseDoc.getCursor();
     if (!cursor) {
-      ui.alert("Please place the cursor in the place you want to insert bibliography.");
+      ui.alert(
+        "Please place the cursor in the place you want to insert bibliography."
+      );
       throw new Error("cursor not found");
     }
 
